@@ -48,6 +48,17 @@ Suggests: python-setuptools-doc
 Description: Python3 Distutils Enhancements
  Extensions to the python-distutils for large or complex distributions.
 
+Package: python3-setuptools-whl
+Architecture: all
+Depends: ${misc:Depends}
+Breaks: python-pip-whl (<< 21.3.1+dfsg-2~)
+Replaces: python-pip-whl (<< 21.3.1+dfsg-2~)
+Description: Python Distutils Enhancements (wheel package)
+ Extensions to the python-distutils for large or complex distributions.
+ .
+ This is the support package for the PEP 427 wheel version of the package,
+ required for using setuptools inside a virtual environment.
+
 #Package: pypy-pkg-resources
 #Suggests: pypy-setuptools
 #Architecture: all
@@ -72,11 +83,3 @@ Description: Python3 Distutils Enhancements
 #Suggests: python-setuptools-doc
 #Description: PyPy Distutils Enhancements
 # Extensions to the python-distutils for large or complex distributions.
-
-#Package: python-setuptools-whl
-#Architecture: all
-#Depends: ${misc:Depends}
-#Description: Python Distutils Enhancements (wheel package)
-# Extensions to the python-distutils for large or complex distributions.
-# .
-# This package provides setuptools in PEP 427 wheel format.
