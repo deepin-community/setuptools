@@ -1,0 +1,11 @@
+--- a/docs/conf.py
++++ b/docs/conf.py
+@@ -96,7 +96,7 @@ default_role = 'any'
+ html_theme = 'furo'
+ 
+ # Add support for inline tabs
+-extensions += ['sphinx_inline_tabs']
++#extensions += ['sphinx_inline_tabs']
+ 
+ # Support for distutils
+ 

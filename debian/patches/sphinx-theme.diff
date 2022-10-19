@@ -1,0 +1,11 @@
+--- a/docs/conf.py
++++ b/docs/conf.py
+@@ -93,7 +93,7 @@ extensions += ['sphinx.ext.extlinks', 's
+ default_role = 'any'
+ 
+ # HTML theme
+-html_theme = 'furo'
++html_theme = 'alabaster'
+ 
+ # Add support for inline tabs
+ #extensions += ['sphinx_inline_tabs']

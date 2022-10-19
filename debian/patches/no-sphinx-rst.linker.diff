@@ -1,0 +1,8 @@
+--- a/docs/conf.py
++++ b/docs/conf.py
+@@ -1,4 +1,4 @@
+-extensions = ['sphinx.ext.autodoc', 'jaraco.packaging.sphinx', 'rst.linker']
++extensions = []
+ 
+ master_doc = "index"
+ 

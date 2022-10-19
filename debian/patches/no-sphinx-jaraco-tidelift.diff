@@ -1,0 +1,8 @@
+--- a/docs/conf.py
++++ b/docs/conf.py
+@@ -149,4 +149,4 @@ towncrier_draft_working_directory = '..'
+ # Avoid an empty section for unpublished changes.
+ towncrier_draft_include_empty = False
+ 
+-extensions += ['jaraco.tidelift']
++#extensions += ['jaraco.tidelift']
