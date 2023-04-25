@@ -16,8 +16,6 @@ tox.ini
 _distutils_hack/__init__.py
 _distutils_hack/override.py
 changelog.d/.gitignore
-changelog.d/1988-change.rst
-changelog.d/2785-change.rst
 changelog.d/README.rst
 docs/build_meta.rst
 docs/conf.py
@@ -27,6 +25,7 @@ docs/pkg_resources.rst
 docs/python 2 sunset.rst
 docs/roadmap.rst
 docs/setuptools.rst
+docs/_ext/_custom_icons.py
 docs/deprecated/distutils-legacy.rst
 docs/deprecated/easy_install.rst
 docs/deprecated/functionalities.rst
@@ -48,6 +47,7 @@ docs/deprecated/distutils/uploading.rst
 docs/development/developer-guide.rst
 docs/development/index.rst
 docs/development/releases.rst
+docs/images/README.rst
 docs/references/keywords.rst
 docs/userguide/commands.rst
 docs/userguide/datafiles.rst
@@ -71,9 +71,9 @@ pkg_resources/_vendor/pyparsing.py
 pkg_resources/_vendor/vendored.txt
 pkg_resources/_vendor/packaging/__about__.py
 pkg_resources/_vendor/packaging/__init__.py
-pkg_resources/_vendor/packaging/_compat.py
+pkg_resources/_vendor/packaging/_manylinux.py
+pkg_resources/_vendor/packaging/_musllinux.py
 pkg_resources/_vendor/packaging/_structures.py
-pkg_resources/_vendor/packaging/_typing.py
 pkg_resources/_vendor/packaging/markers.py
 pkg_resources/_vendor/packaging/requirements.py
 pkg_resources/_vendor/packaging/specifiers.py
@@ -254,9 +254,9 @@ setuptools/_vendor/more_itertools/more.py
 setuptools/_vendor/more_itertools/recipes.py
 setuptools/_vendor/packaging/__about__.py
 setuptools/_vendor/packaging/__init__.py
-setuptools/_vendor/packaging/_compat.py
+setuptools/_vendor/packaging/_manylinux.py
+setuptools/_vendor/packaging/_musllinux.py
 setuptools/_vendor/packaging/_structures.py
-setuptools/_vendor/packaging/_typing.py
 setuptools/_vendor/packaging/markers.py
 setuptools/_vendor/packaging/requirements.py
 setuptools/_vendor/packaging/specifiers.py
