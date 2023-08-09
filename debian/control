@@ -8,9 +8,11 @@ Build-Depends:
  python3-all,
  python3-alabaster,
  python3-sphinx,
+ python3-sphinx-reredirects,
+ python3-sphinx-notfound-page,
  python3-wheel
 Build-Conflicts: python-setuptools, python3-setuptools, pypy-setuptools
-Standards-Version: 4.5.1
+Standards-Version: 4.6.2
 Homepage: https://pypi.python.org/pypi/setuptools
 
 Package: python-setuptools-doc

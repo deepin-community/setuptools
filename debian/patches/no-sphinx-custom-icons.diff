@@ -1,11 +1,11 @@
 --- a/docs/conf.py
 +++ b/docs/conf.py
-@@ -176,7 +176,7 @@ towncrier_draft_include_empty = False
+@@ -213,7 +213,7 @@ towncrier_draft_include_empty = False
+ #extensions += ['jaraco.tidelift']
  
  # Add icons (aka "favicons") to documentation
- sys.path.append(os.path.join(os.path.dirname(__file__), '_ext'))
--extensions += ['_custom_icons']
-+#extensions += ['_custom_icons']
+-extensions += ['sphinx-favicon']
++#extensions += ['sphinx-favicon']
+ html_static_path = ['images']  # should contain the folder with icons
  
- # List of dicts with <link> HTML attributes
- # as defined in https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link
+ # Add support for nice Not Found 404 pages

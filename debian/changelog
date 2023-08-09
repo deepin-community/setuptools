@@ -1,3 +1,61 @@
+setuptools (66.1.1-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Bump standards version.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 27 Jan 2023 07:49:44 +0100
+
+setuptools (65.6.3-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 31 Dec 2022 10:00:07 +0100
+
+setuptools (65.5.0-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Install distutils-precedence.pth, to avoid packages need to hack import
+    order in setup.py. Closes: #1025216
+
+ -- Stefano Rivera <stefanor@debian.org>  Sat, 03 Dec 2022 10:16:50 -0400
+
+setuptools (65.5.0-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 21 Oct 2022 16:45:14 +0200
+
+setuptools (65.3.0-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Fix a merge error in multiarch-extname.diff, causing sysconfig to be an
+    unbound local in easy_install.py
+
+ -- Stefano Rivera <stefanor@debian.org>  Thu, 15 Sep 2022 10:01:42 +0200
+
+setuptools (65.3.0-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Build-depend on python3-sphinx-notfound-page.
+  * Bump standards version.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 14 Sep 2022 16:54:08 +0200
+
+setuptools (63.2.0-1) experimental; urgency=medium
+
+  * New upstream version.
+  * Build-depend on python3-sphinx-reredirects.
+  * Bump standards version.
+
+ -- Matthias Klose <doko@debian.org>  Sun, 17 Jul 2022 17:53:39 +0200
+
+setuptools (59.6.0-1.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Source-only upload.
+
+ -- Stefano Rivera <stefanor@debian.org>  Tue, 18 Jan 2022 08:56:42 -0400
+
 setuptools (59.6.0-1.1) unstable; urgency=medium
 
   * Non-maintainer upload.

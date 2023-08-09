@@ -7,6 +7,7 @@ import distutils.cmd
 from distutils.errors import DistutilsOptionError
 from distutils.errors import DistutilsSetupError
 from distutils.core import Extension
+from zipfile import ZipFile
 
 import pytest
 
@@ -16,6 +17,11 @@ import setuptools
 import setuptools.dist
 import setuptools.depends as dep
 from setuptools.depends import Require
+
+
+@pytest.fixture(autouse=True)
+def isolated_dir(tmpdir_cwd):
+    yield
 
 
 def makeSetup(**args):
@@ -289,3 +295,16 @@ def test_findall_missing_symlink(tmpdir, can_symlink):
         os.symlink('foo', 'bar')
         found = list(setuptools.findall())
         assert found == []
+
+
+def test_its_own_wheel_does_not_contain_tests(setuptools_wheel):
+    with ZipFile(setuptools_wheel) as zipfile:
+        contents = [f.replace(os.sep, '/') for f in zipfile.namelist()]
+
+    for member in contents:
+        assert '/tests/' not in member
+
+
+def test_convert_path_deprecated():
+    with pytest.warns(setuptools.SetuptoolsDeprecationWarning):
+        setuptools.convert_path('setuptools/tests')
