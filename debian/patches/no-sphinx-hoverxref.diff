@@ -1,8 +1,8 @@
 --- a/docs/conf.py
 +++ b/docs/conf.py
-@@ -102,19 +102,6 @@ intersphinx_mapping.update({
-     ),
- })
+@@ -115,19 +115,6 @@ intersphinx_mapping.update(
+     }
+ )
  
 -# Support tooltips on references
 -extensions += ['hoverxref.extension']

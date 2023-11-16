@@ -1,3 +1,37 @@
+setuptools (68.1.2-2) unstable; urgency=medium
+
+  * Don't run dh_auto_clean, just remove the .pybuild directory manually.
+    dh-python would remove the egg-info dir during the dh_auto_clean call.
+    Closes: #1052540, #1052783. LP: #2037205.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 04 Oct 2023 10:28:14 +0200
+
+setuptools (68.1.2-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Refresh patches.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 24 Aug 2023 20:49:08 +0200
+
+setuptools (68.0.0-2) unstable; urgency=medium
+
+  * Exclude the debian dir from namespace_package searches by default.
+    Stefano Rivera. Closes: #1041091.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 10 Aug 2023 05:21:32 +0200
+
+setuptools (68.0.0-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 05 Jul 2023 13:39:33 +0200
+
+setuptools (67.8.0-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Matthias Klose <doko@debian.org>  Mon, 12 Jun 2023 09:47:57 +0200
+
 setuptools (66.1.1-1) unstable; urgency=medium
 
   * New upstream version.

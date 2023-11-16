@@ -8,6 +8,7 @@ Build-Depends:
  python3-all,
  python3-alabaster,
  python3-sphinx,
+ python3-sphinx-favicon,
  python3-sphinx-reredirects,
  python3-sphinx-notfound-page,
  python3-wheel

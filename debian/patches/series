@@ -1,7 +1,7 @@
 install-layout.diff
 multiarch-extname.diff
 no-sphinx-rst.linker.diff
-fix-changes-link.diff
+#fix-changes-link.diff
 #multiple-entrypoints.diff
 no-SOURCES.txt-in-egg-ingo.diff
 reproducible.diff
@@ -12,5 +12,4 @@ no-sphinx-inline-tabs.diff
 no-sphinx-towncrier.diff
 no-sphinx-jaraco-tidelift.diff
 sphinx-theme.diff
-no-sphinx-custom-icons.diff
 no-sphinx-hoverxref.diff
