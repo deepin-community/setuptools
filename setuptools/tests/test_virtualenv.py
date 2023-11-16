@@ -58,25 +58,31 @@ def access_pypi():
         pytest.param(
             'pip<20.1',
             marks=pytest.mark.xfail(
-                'sys.version_info > (3, 12)',
-                reason="pip 22 requried for Python 3.12 and later",
+                'sys.version_info >= (3, 12)',
+                reason="pip 23.1.2 required for Python 3.12 and later",
             ),
         ),
         pytest.param(
             'pip<21',
             marks=pytest.mark.xfail(
-                'sys.version_info > (3, 12)',
-                reason="pip 22 requried for Python 3.12 and later",
+                'sys.version_info >= (3, 12)',
+                reason="pip 23.1.2 required for Python 3.12 and later",
             ),
         ),
         pytest.param(
             'pip<22',
             marks=pytest.mark.xfail(
-                'sys.version_info > (3, 12)',
-                reason="pip 22 requried for Python 3.12 and later",
+                'sys.version_info >= (3, 12)',
+                reason="pip 23.1.2 required for Python 3.12 and later",
             ),
         ),
-        'pip<23',
+        pytest.param(
+            'pip<23',
+            marks=pytest.mark.xfail(
+                'sys.version_info >= (3, 12)',
+                reason="pip 23.1.2 required for Python 3.12 and later",
+            ),
+        ),
         pytest.param(
             'https://github.com/pypa/pip/archive/main.zip',
             marks=pytest.mark.xfail(reason='#2975'),
@@ -90,7 +96,7 @@ def test_pip_upgrade_from_source(
     Check pip can upgrade setuptools from source.
     """
     # Install pip/wheel, in a venv without setuptools (as it
-    # should not be needed for bootstraping from source)
+    # should not be needed for bootstrapping from source)
     venv = venv_without_setuptools
     venv.run(["pip", "install", "-U", "wheel"])
     if pip_version is not None:
@@ -174,8 +180,8 @@ def _check_test_command_install_requirements(venv, tmpdir):
 
 
 def test_test_command_install_requirements(venv, tmpdir, tmpdir_cwd):
-    # Ensure pip/wheel packages are installed.
-    venv.run(["python", "-c", "__import__('pkg_resources').require(['pip', 'wheel'])"])
+    # Ensure pip is installed.
+    venv.run(["python", "-c", "import pip"])
     # disable index URL so bits and bobs aren't requested from PyPI
     with contexts.environment(PYTHONPATH=None, PIP_NO_INDEX="1"):
         _check_test_command_install_requirements(venv, tmpdir)

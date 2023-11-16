@@ -70,15 +70,23 @@ def setuptools_sdist(tmp_path_factory, request):
         return Path(os.getenv("PRE_BUILT_SETUPTOOLS_SDIST")).resolve()
 
     with contexts.session_locked_tmp_dir(
-            request, tmp_path_factory, "sdist_build") as tmp:
+        request, tmp_path_factory, "sdist_build"
+    ) as tmp:
         dist = next(tmp.glob("*.tar.gz"), None)
         if dist:
             return dist
 
-        subprocess.check_call([
-            sys.executable, "-m", "build", "--sdist",
-            "--outdir", str(tmp), str(request.config.rootdir)
-        ])
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "build",
+                "--sdist",
+                "--outdir",
+                str(tmp),
+                str(request.config.rootdir),
+            ]
+        )
         return next(tmp.glob("*.tar.gz"))
 
 
@@ -88,15 +96,23 @@ def setuptools_wheel(tmp_path_factory, request):
         return Path(os.getenv("PRE_BUILT_SETUPTOOLS_WHEEL")).resolve()
 
     with contexts.session_locked_tmp_dir(
-            request, tmp_path_factory, "wheel_build") as tmp:
+        request, tmp_path_factory, "wheel_build"
+    ) as tmp:
         dist = next(tmp.glob("*.whl"), None)
         if dist:
             return dist
 
-        subprocess.check_call([
-            sys.executable, "-m", "build", "--wheel",
-            "--outdir", str(tmp) , str(request.config.rootdir)
-        ])
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "build",
+                "--wheel",
+                "--outdir",
+                str(tmp),
+                str(request.config.rootdir),
+            ]
+        )
         return next(tmp.glob("*.whl"))
 
 
@@ -105,6 +121,8 @@ def venv(tmp_path, setuptools_wheel):
     """Virtual env with the version of setuptools under test installed"""
     env = environment.VirtualEnv()
     env.root = path.Path(tmp_path / 'venv')
+    env.create_opts = ['--no-setuptools', '--wheel=bundle']
+    # TODO: Use `--no-wheel` when setuptools implements its own bdist_wheel
     env.req = str(setuptools_wheel)
     # In some environments (eg. downstream distro packaging),
     # where tox isn't used to run tests and PYTHONPATH is set to point to
@@ -125,7 +143,7 @@ def venv_without_setuptools(tmp_path):
     """Virtual env without any version of setuptools installed"""
     env = environment.VirtualEnv()
     env.root = path.Path(tmp_path / 'venv_without_setuptools')
-    env.create_opts = ['--no-setuptools']
+    env.create_opts = ['--no-setuptools', '--no-wheel']
     env.ensure_env()
     return env
 

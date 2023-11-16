@@ -56,9 +56,20 @@ containing a ``build-system`` section similar to the example below:
 This section declares what are your build system dependencies, and which
 library will be used to actually do the packaging.
 
+.. note::
+
+   Historically this documentation has unnecessarily listed ``wheel``
+   in the ``requires`` list, and many projects still do that. This is
+   not recommended. The backend automatically adds ``wheel`` dependency
+   when it is required, and listing it explicitly causes it to be
+   unnecessarily required for source distribution builds.
+   You should only include ``wheel`` in ``requires`` if you need to explicitly
+   access it during build time (e.g. if your project needs a ``setup.py``
+   script that imports ``wheel``).
+
 In addition to specifying a build system, you also will need to add
 some package information such as metadata, contents, dependencies, etc.
-This can be done in the same ``pyproject.toml`` [#beta]_ file,
+This can be done in the same ``pyproject.toml`` file,
 or in a separated one: ``setup.cfg`` or ``setup.py`` [#setup.py]_.
 
 The following example demonstrates a minimum configuration
@@ -185,7 +196,7 @@ Therefore, ``setuptools`` provides a convenient way to customize
 which packages should be distributed and in which directory they should be
 found, as shown in the example below:
 
-.. tab:: pyproject.toml (**BETA**) [#beta]_
+.. tab:: pyproject.toml
 
     .. code-block:: toml
 
@@ -243,8 +254,7 @@ For more details and advanced use, go to :ref:`package_discovery`.
    have been improved to detect popular project layouts (such as the
    :ref:`flat-layout` and :ref:`src-layout`) without requiring any
    special configuration. Check out our :ref:`reference docs <package_discovery>`
-   for more information, but please keep in mind that this functionality is
-   still considered **beta** and might change in future releases.
+   for more information.
 
 
 Entry points and automatic script creation
@@ -352,13 +362,13 @@ Including Data Files
 Setuptools offers three ways to specify data files to be included in your packages.
 For the simplest use, you can simply use the ``include_package_data`` keyword:
 
-.. tab:: pyproject.toml (**BETA**) [#beta]_
+.. tab:: pyproject.toml
 
     .. code-block:: toml
 
         [tool.setuptools]
         include-package-data = true
-        # This is already the default behaviour if your are using
+        # This is already the default behaviour if you are using
         # pyproject.toml to configure your build.
         # You can deactivate that with `include-package-data = false`
 
@@ -467,10 +477,5 @@ up-to-date references that can help you when it is time to distribute your work.
    <pyproject_config>` and use ``setup.py`` only for the parts not
    supported in those files (e.g. C extensions).
    See :ref:`note <setuppy_discouraged>`.
-
-.. [#beta]
-   Support for adding build configuration options via the ``[tool.setuptools]``
-   table in the ``pyproject.toml`` file is still in **beta** stage.
-   See :doc:`/userguide/pyproject_config`.
 
 .. _PyPI: https://pypi.org

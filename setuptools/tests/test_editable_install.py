@@ -13,7 +13,6 @@ from uuid import uuid4
 
 import jaraco.envs
 import jaraco.path
-import pip_run.launch
 import pytest
 from path import Path as _Path
 
@@ -21,7 +20,9 @@ from . import contexts, namespaces
 
 from setuptools._importlib import resources as importlib_resources
 from setuptools.command.editable_wheel import (
+    _DebuggingTips,
     _LinkTree,
+    _encode_pth,
     _find_virtual_namespaces,
     _find_namespaces,
     _find_package_roots,
@@ -40,7 +41,8 @@ def editable_opts(request):
 
 
 EXAMPLE = {
-    'pyproject.toml': dedent("""\
+    'pyproject.toml': dedent(
+        """\
         [build-system]
         requires = ["setuptools"]
         build-backend = "setuptools.build_meta"
@@ -68,18 +70,22 @@ EXAMPLE = {
 
         [tool.distutils.egg_info]
         tag-build = ".post0"
-        """),
-    "MANIFEST.in": dedent("""\
+        """
+    ),
+    "MANIFEST.in": dedent(
+        """\
         global-include *.py *.txt
         global-exclude *.py[cod]
         prune dist
         prune build
-        """).strip(),
+        """
+    ).strip(),
     "README.rst": "This is a ``README``",
     "LICENSE.txt": "---- placeholder MIT license ----",
     "src": {
         "mypkg": {
-            "__init__.py": dedent("""\
+            "__init__.py": dedent(
+                """\
                 import sys
 
                 if sys.version_info[:2] >= (3, 8):
@@ -91,19 +97,22 @@ EXAMPLE = {
                     __version__ = version(__name__)
                 except PackageNotFoundError:
                     __version__ = "unknown"
-                """),
-            "__main__.py": dedent("""\
+                """
+            ),
+            "__main__.py": dedent(
+                """\
                 from importlib.resources import read_text
                 from . import __version__, __name__ as parent
                 from .mod import x
 
                 data = read_text(parent, "data.txt")
                 print(__version__, data, x)
-                """),
+                """
+            ),
             "mod.py": "x = ''",
             "data.txt": "Hello World",
         }
-    }
+    },
 }
 
 
@@ -115,16 +124,23 @@ SETUP_SCRIPT_STUB = "__import__('setuptools').setup()"
     [
         {**EXAMPLE, "setup.py": SETUP_SCRIPT_STUB},  # type: ignore
         EXAMPLE,  # No setup.py script
-    ]
+    ],
 )
 def test_editable_with_pyproject(tmp_path, venv, files, editable_opts):
     project = tmp_path / "mypkg"
     project.mkdir()
     jaraco.path.build(files, prefix=project)
 
-    cmd = [venv.exe(), "-m", "pip", "install",
-           "--no-build-isolation",  # required to force current version of setuptools
-           "-e", str(project), *editable_opts]
+    cmd = [
+        venv.exe(),
+        "-m",
+        "pip",
+        "install",
+        "--no-build-isolation",  # required to force current version of setuptools
+        "-e",
+        str(project),
+        *editable_opts,
+    ]
     print(str(subprocess.check_output(cmd), "utf-8"))
 
     cmd = [venv.exe(), "-m", "mypkg"]
@@ -138,7 +154,8 @@ def test_editable_with_pyproject(tmp_path, venv, files, editable_opts):
 def test_editable_with_flat_layout(tmp_path, venv, editable_opts):
     files = {
         "mypkg": {
-            "pyproject.toml": dedent("""\
+            "pyproject.toml": dedent(
+                """\
                 [build-system]
                 requires = ["setuptools", "wheel"]
                 build-backend = "setuptools.build_meta"
@@ -150,7 +167,8 @@ def test_editable_with_flat_layout(tmp_path, venv, editable_opts):
                 [tool.setuptools]
                 packages = ["pkg"]
                 py-modules = ["mod"]
-                """),
+                """
+            ),
             "pkg": {"__init__.py": "a = 4"},
             "mod.py": "b = 2",
         },
@@ -158,9 +176,16 @@ def test_editable_with_flat_layout(tmp_path, venv, editable_opts):
     jaraco.path.build(files, prefix=tmp_path)
     project = tmp_path / "mypkg"
 
-    cmd = [venv.exe(), "-m", "pip", "install",
-           "--no-build-isolation",  # required to force current version of setuptools
-           "-e", str(project), *editable_opts]
+    cmd = [
+        venv.exe(),
+        "-m",
+        "pip",
+        "install",
+        "--no-build-isolation",  # required to force current version of setuptools
+        "-e",
+        str(project),
+        *editable_opts,
+    ]
     print(str(subprocess.check_output(cmd), "utf-8"))
     cmd = [venv.exe(), "-c", "import pkg, mod; print(pkg.a, mod.b)"]
     assert subprocess.check_output(cmd).strip() == b"4 2"
@@ -169,7 +194,8 @@ def test_editable_with_flat_layout(tmp_path, venv, editable_opts):
 def test_editable_with_single_module(tmp_path, venv, editable_opts):
     files = {
         "mypkg": {
-            "pyproject.toml": dedent("""\
+            "pyproject.toml": dedent(
+                """\
                 [build-system]
                 requires = ["setuptools", "wheel"]
                 build-backend = "setuptools.build_meta"
@@ -180,16 +206,24 @@ def test_editable_with_single_module(tmp_path, venv, editable_opts):
 
                 [tool.setuptools]
                 py-modules = ["mod"]
-                """),
+                """
+            ),
             "mod.py": "b = 2",
         },
     }
     jaraco.path.build(files, prefix=tmp_path)
     project = tmp_path / "mypkg"
 
-    cmd = [venv.exe(), "-m", "pip", "install",
-           "--no-build-isolation",  # required to force current version of setuptools
-           "-e", str(project), *editable_opts]
+    cmd = [
+        venv.exe(),
+        "-m",
+        "pip",
+        "install",
+        "--no-build-isolation",  # required to force current version of setuptools
+        "-e",
+        str(project),
+        *editable_opts,
+    ]
     print(str(subprocess.check_output(cmd), "utf-8"))
     cmd = [venv.exe(), "-c", "import mod; print(mod.b)"]
     assert subprocess.check_output(cmd).strip() == b"2"
@@ -244,7 +278,8 @@ class TestPep420Namespaces:
         """Currently users can create a namespace by tweaking `package_dir`"""
         files = {
             "pkgA": {
-                "pyproject.toml": dedent("""\
+                "pyproject.toml": dedent(
+                    """\
                     [build-system]
                     requires = ["setuptools", "wheel"]
                     build-backend = "setuptools.build_meta"
@@ -255,7 +290,8 @@ class TestPep420Namespaces:
 
                     [tool.setuptools]
                     package-dir = {"myns.n.pkgA" = "src"}
-                    """),
+                    """
+                ),
                 "src": {"__init__.py": "a = 1"},
             },
         }
@@ -280,7 +316,8 @@ class TestPep420Namespaces:
         """
         files = {
             "pkgA": {
-                "pyproject.toml": dedent("""\
+                "pyproject.toml": dedent(
+                    """\
                     [build-system]
                     requires = ["setuptools", "wheel"]
                     build-backend = "setuptools.build_meta"
@@ -291,7 +328,8 @@ class TestPep420Namespaces:
 
                     [tool.setuptools]
                     packages.find.include = ["mypkg.*"]
-                    """),
+                    """
+                ),
                 "mypkg": {
                     "__init__.py": "",
                     "other.py": "b = 1",
@@ -299,7 +337,7 @@ class TestPep420Namespaces:
                         "__init__.py": "",
                         "pkgA.py": "a = 1",
                     },
-                 },
+                },
                 "MANIFEST.in": EXAMPLE["MANIFEST.in"],
             },
         }
@@ -341,7 +379,7 @@ def test_editable_with_prefix(tmp_path, sample_project, editable_opts):
     site_packages.mkdir(parents=True)
 
     # install workaround
-    pip_run.launch.inject_sitecustomize(site_packages)
+    _addsitedir(site_packages)
 
     env = dict(os.environ, PYTHONPATH=str(site_packages))
     cmd = [
@@ -371,6 +409,7 @@ class TestFinderTemplate:
     If at some point in time the implementation is changed for something different,
     this test can be modified or even excluded.
     """
+
     def install_finder(self, finder):
         loc = {}
         exec(finder, loc, loc)
@@ -390,7 +429,7 @@ class TestFinderTemplate:
 
         mapping = {
             "pkg1": str(tmp_path / "src1/pkg1"),
-            "mod2": str(tmp_path / "src2/mod2")
+            "mod2": str(tmp_path / "src2/mod2"),
         }
         template = _finder_template(str(uuid4()), mapping, {})
 
@@ -521,7 +560,7 @@ class TestFinderTemplate:
                 "__init__.py": "",
                 "bar": {
                     "__init__.py": "",
-                }
+                },
             },
         }
         jaraco.path.build(files, prefix=tmp_path)
@@ -538,6 +577,132 @@ class TestFinderTemplate:
             self.install_finder(template)
             with pytest.raises(ImportError, match="foobar"):
                 import_module("foobar")
+
+    def test_case_sensitivity(self, tmp_path):
+        files = {
+            "foo": {
+                "__init__.py": "",
+                "lowercase.py": "x = 1",
+                "bar": {
+                    "__init__.py": "",
+                    "lowercase.py": "x = 2",
+                },
+            },
+        }
+        jaraco.path.build(files, prefix=tmp_path)
+        mapping = {
+            "foo": str(tmp_path / "foo"),
+        }
+        template = _finder_template(str(uuid4()), mapping, {})
+        with contexts.save_paths(), contexts.save_sys_modules():
+            sys.modules.pop("foo", None)
+
+            self.install_finder(template)
+            with pytest.raises(ImportError, match="\'FOO\'"):
+                import_module("FOO")
+
+            with pytest.raises(ImportError, match="\'foo\\.LOWERCASE\'"):
+                import_module("foo.LOWERCASE")
+
+            with pytest.raises(ImportError, match="\'foo\\.bar\\.Lowercase\'"):
+                import_module("foo.bar.Lowercase")
+
+            with pytest.raises(ImportError, match="\'foo\\.BAR\'"):
+                import_module("foo.BAR.lowercase")
+
+            with pytest.raises(ImportError, match="\'FOO\'"):
+                import_module("FOO.bar.lowercase")
+
+            mod = import_module("foo.lowercase")
+            assert mod.x == 1
+
+            mod = import_module("foo.bar.lowercase")
+            assert mod.x == 2
+
+    def test_namespace_case_sensitivity(self, tmp_path):
+        files = {
+            "pkg": {
+                "__init__.py": "a = 13",
+                "foo": {
+                    "__init__.py": "b = 37",
+                    "bar.py": "c = 42",
+                },
+            },
+        }
+        jaraco.path.build(files, prefix=tmp_path)
+
+        mapping = {"ns.othername": str(tmp_path / "pkg")}
+        namespaces = {"ns": []}
+
+        template = _finder_template(str(uuid4()), mapping, namespaces)
+        with contexts.save_paths(), contexts.save_sys_modules():
+            for mod in ("ns", "ns.othername"):
+                sys.modules.pop(mod, None)
+
+            self.install_finder(template)
+            pkg = import_module("ns.othername")
+            expected = str((tmp_path / "pkg").resolve())
+            assert_path(pkg, expected)
+            assert pkg.a == 13
+
+            foo = import_module("ns.othername.foo")
+            assert foo.b == 37
+
+            bar = import_module("ns.othername.foo.bar")
+            assert bar.c == 42
+
+            with pytest.raises(ImportError, match="\'NS\'"):
+                import_module("NS.othername.foo")
+
+            with pytest.raises(ImportError, match="\'ns\\.othername\\.FOO\\'"):
+                import_module("ns.othername.FOO")
+
+            with pytest.raises(ImportError, match="\'ns\\.othername\\.foo\\.BAR\\'"):
+                import_module("ns.othername.foo.BAR")
+
+    def test_intermediate_packages(self, tmp_path):
+        """
+        The finder should not import ``fullname`` if the intermediate segments
+        don't exist (see pypa/setuptools#4019).
+        """
+        files = {
+            "src": {
+                "mypkg": {
+                    "__init__.py": "",
+                    "config.py": "a = 13",
+                    "helloworld.py": "b = 13",
+                    "components": {
+                        "config.py": "a = 37",
+                    },
+                },
+            }
+        }
+        jaraco.path.build(files, prefix=tmp_path)
+
+        mapping = {"mypkg": str(tmp_path / "src/mypkg")}
+        template = _finder_template(str(uuid4()), mapping, {})
+
+        with contexts.save_paths(), contexts.save_sys_modules():
+            for mod in (
+                "mypkg",
+                "mypkg.config",
+                "mypkg.helloworld",
+                "mypkg.components",
+                "mypkg.components.config",
+                "mypkg.components.helloworld",
+            ):
+                sys.modules.pop(mod, None)
+
+            self.install_finder(template)
+
+            config = import_module("mypkg.components.config")
+            assert config.a == 37
+
+            helloworld = import_module("mypkg.helloworld")
+            assert helloworld.b == 13
+
+            with pytest.raises(ImportError):
+                import_module("mypkg.components.helloworld")
 
 
 def test_pkg_roots(tmp_path):
@@ -557,7 +722,7 @@ def test_pkg_roots(tmp_path):
     package_dir = {
         "a.b.c": "other",
         "a.b.c.x.y.z": "another",
-        "m.n.o.p.q": "yet_another"
+        "m.n.o.p.q": "yet_another",
     }
     packages = [
         "a",
@@ -624,13 +789,16 @@ class TestOverallBehaviour:
             "src": {"mypkg": FLAT_LAYOUT["mypkg"]},
         },
         "custom-layout": {
-            "pyproject.toml": dedent(PYPROJECT) + dedent("""\
+            "pyproject.toml": dedent(PYPROJECT)
+            + dedent(
+                """\
                 [tool.setuptools]
                 packages = ["mypkg", "mypkg.subpackage"]
 
                 [tool.setuptools.package-dir]
                 "mypkg.subpackage" = "other"
-                """),
+                """
+            ),
             "MANIFEST.in": EXAMPLE["MANIFEST.in"],
             "otherfile.py": "",
             "mypkg": {
@@ -706,7 +874,8 @@ class TestOverallBehaviour:
 
 class TestLinkTree:
     FILES = deepcopy(TestOverallBehaviour.EXAMPLES["src-layout"])
-    FILES["pyproject.toml"] += dedent("""\
+    FILES["pyproject.toml"] += dedent(
+        """\
         [tool.setuptools]
         # Temporary workaround: both `include-package-data` and `package-data` configs
         # can be removed after #3260 is fixed.
@@ -716,7 +885,8 @@ class TestLinkTree:
         [tool.setuptools.packages.find]
         where = ["src"]
         exclude = ["*.subpackage*"]
-        """)
+        """
+    )
     FILES["src"]["mypkg"]["resource.not_in_manifest"] = "abc"
 
     def test_generated_tree(self, tmp_path):
@@ -821,25 +991,31 @@ def test_compat_install(tmp_path, venv):
 def test_pbr_integration(tmp_path, venv, editable_opts):
     """Ensure editable installs work with pbr, issue #3500"""
     files = {
-        "pyproject.toml": dedent("""\
+        "pyproject.toml": dedent(
+            """\
             [build-system]
             requires = ["setuptools"]
             build-backend = "setuptools.build_meta"
-            """),
-        "setup.py": dedent("""\
+            """
+        ),
+        "setup.py": dedent(
+            """\
             __import__('setuptools').setup(
                 pbr=True,
                 setup_requires=["pbr"],
             )
-            """),
-        "setup.cfg": dedent("""\
+            """
+        ),
+        "setup.cfg": dedent(
+            """\
             [metadata]
             name = mypkg
 
             [files]
             packages =
                 mypkg
-            """),
+            """
+        ),
         "mypkg": {
             "__init__.py": "",
             "hello.py": "print('Hello world!')",
@@ -865,11 +1041,13 @@ class TestCustomBuildPy:
     During the transition period setuptools should prevent potential errors from
     happening due to those assumptions.
     """
+
     # TODO: Remove tests after _run_build_steps is removed.
 
     FILES = {
         **TestOverallBehaviour.EXAMPLES["flat-layout"],
-        "setup.py": dedent("""\
+        "setup.py": dedent(
+            """\
             import pathlib
             from setuptools import setup
             from setuptools.command.build_py import build_py as orig
@@ -880,7 +1058,8 @@ class TestCustomBuildPy:
                     raise ValueError("TEST_RAISE")
 
             setup(cmdclass={"build_py": my_build_py})
-            """),
+            """
+        ),
     }
 
     def test_safeguarded_from_errors(self, tmp_path, venv):
@@ -955,6 +1134,31 @@ class TestCustomBuildExt:
         assert any(name.endswith(ext) for ext in EXTENSION_SUFFIXES)
 
 
+def test_debugging_tips(tmpdir_cwd, monkeypatch):
+    """Make sure to display useful debugging tips to the user."""
+    jaraco.path.build({"module.py": "x = 42"})
+    dist = Distribution()
+    dist.script_name = "setup.py"
+    dist.set_defaults()
+    cmd = editable_wheel(dist)
+    cmd.ensure_finalized()
+
+    SimulatedErr = type("SimulatedErr", (Exception,), {})
+    simulated_failure = Mock(side_effect=SimulatedErr())
+    monkeypatch.setattr(cmd, "get_finalized_command", simulated_failure)
+
+    expected_msg = "following steps are recommended to help debugging"
+    with pytest.raises(SimulatedErr), pytest.warns(_DebuggingTips, match=expected_msg):
+        cmd.run()
+
+
+@pytest.mark.filterwarnings("error")
+def test_encode_pth():
+    """Ensure _encode_pth function does not produce encoding warnings"""
+    content = _encode_pth("tkmilan_ç_utf8")  # no warnings (would be turned into errors)
+    assert isinstance(content, bytes)
+
+
 def install_project(name, venv, tmp_path, files, *opts):
     project = tmp_path / name
     project.mkdir()
@@ -965,6 +1169,16 @@ def install_project(name, venv, tmp_path, files, *opts):
         stderr=subprocess.STDOUT,
     )
     return project, out
+
+
+def _addsitedir(new_dir: Path):
+    """To use this function, it is necessary to insert new_dir in front of sys.path.
+    The Python process will try to import a ``sitecustomize`` module on startup.
+    If we manipulate sys.path/PYTHONPATH, we can force it to run our code,
+    which invokes ``addsitedir`` and ensure ``.pth`` files are loaded.
+    """
+    file = f"import site; site.addsitedir({os.fspath(new_dir)!r})\n"
+    (new_dir / "sitecustomize.py").write_text(file, encoding="utf-8")
 
 
 # ---- Assertion Helpers ----
