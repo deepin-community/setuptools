@@ -3,27 +3,28 @@ applying a similar configuration from setup.cfg
 
 To run these tests offline, please have a look on ``./downloads/preload.py``
 """
+
+from __future__ import annotations
+
 import io
 import re
 import tarfile
 from inspect import cleandoc
 from pathlib import Path
 from unittest.mock import Mock
-from zipfile import ZipFile
 
 import pytest
-from ini2toml.api import Translator
+from ini2toml.api import LiteTranslator
+from packaging.metadata import Metadata
 
 import setuptools  # noqa ensure monkey patch to metadata
-from setuptools.dist import Distribution
-from setuptools.config import setupcfg, pyprojecttoml
-from setuptools.config import expand
-from setuptools.config._apply_pyprojecttoml import _WouldIgnoreField, _some_attrgetter
 from setuptools.command.egg_info import write_requirements
-from setuptools.warnings import SetuptoolsDeprecationWarning
+from setuptools.config import expand, pyprojecttoml, setupcfg
+from setuptools.config._apply_pyprojecttoml import _MissingDynamic, _some_attrgetter
+from setuptools.dist import Distribution
+from setuptools.errors import RemovedConfigError
 
 from .downloads import retrieve_file, urls_from_file
-
 
 HERE = Path(__file__).parent
 EXAMPLES_FILE = "setupcfg_examples.txt"
@@ -40,8 +41,9 @@ def test_apply_pyproject_equivalent_to_setupcfg(url, monkeypatch, tmp_path):
     monkeypatch.setattr(expand, "read_attr", Mock(return_value="0.0.1"))
     setupcfg_example = retrieve_file(url)
     pyproject_example = Path(tmp_path, "pyproject.toml")
-    toml_config = Translator().translate(setupcfg_example.read_text(), "setup.cfg")
-    pyproject_example.write_text(toml_config)
+    setupcfg_text = setupcfg_example.read_text(encoding="utf-8")
+    toml_config = LiteTranslator().translate(setupcfg_text, "setup.cfg")
+    pyproject_example.write_text(toml_config, encoding="utf-8")
 
     dist_toml = pyprojecttoml.apply_configuration(makedist(tmp_path), pyproject_example)
     dist_cfg = setupcfg.apply_configuration(makedist(tmp_path), setupcfg_example)
@@ -77,12 +79,6 @@ def test_apply_pyproject_equivalent_to_setupcfg(url, monkeypatch, tmp_path):
 
     assert set(dist_toml.install_requires) == set(dist_cfg.install_requires)
     if any(getattr(d, "extras_require", None) for d in (dist_toml, dist_cfg)):
-        if (
-            "testing" in dist_toml.extras_require
-            and "testing" not in dist_cfg.extras_require
-        ):
-            # ini2toml can automatically convert `tests_require` to `testing` extra
-            dist_toml.extras_require.pop("testing")
         extra_req_toml = {(k, *sorted(v)) for k, v in dist_toml.extras_require.items()}
         extra_req_cfg = {(k, *sorted(v)) for k, v in dist_cfg.extras_require.items()}
         assert extra_req_toml == extra_req_cfg
@@ -172,9 +168,9 @@ def _pep621_example_project(
         text = text.replace(orig, subst)
     pyproject.write_text(text, encoding="utf-8")
 
-    (tmp_path / readme).write_text("hello world")
-    (tmp_path / "LICENSE.txt").write_text("--- LICENSE stub ---")
-    (tmp_path / "spam.py").write_text(PEP621_EXAMPLE_SCRIPT)
+    (tmp_path / readme).write_text("hello world", encoding="utf-8")
+    (tmp_path / "LICENSE.txt").write_text("--- LICENSE stub ---", encoding="utf-8")
+    (tmp_path / "spam.py").write_text(PEP621_EXAMPLE_SCRIPT, encoding="utf-8")
     return pyproject
 
 
@@ -301,6 +297,54 @@ class TestLicenseFiles:
         assert set(dist.metadata.license_files) == {*license_files, "LICENSE.txt"}
 
 
+class TestPyModules:
+    # https://github.com/pypa/setuptools/issues/4316
+
+    def dist(self, name):
+        toml_config = f"""
+        [project]
+        name = "test"
+        version = "42.0"
+        [tool.setuptools]
+        py-modules = [{name!r}]
+        """
+        pyproject = Path("pyproject.toml")
+        pyproject.write_text(cleandoc(toml_config), encoding="utf-8")
+        return pyprojecttoml.apply_configuration(Distribution({}), pyproject)
+
+    @pytest.mark.parametrize("module", ["pip-run", "abc-d.λ-xyz-e"])
+    def test_valid_module_name(self, tmp_path, monkeypatch, module):
+        monkeypatch.chdir(tmp_path)
+        assert module in self.dist(module).py_modules
+
+    @pytest.mark.parametrize("module", ["pip run", "-pip-run", "pip-run-stubs"])
+    def test_invalid_module_name(self, tmp_path, monkeypatch, module):
+        monkeypatch.chdir(tmp_path)
+        with pytest.raises(ValueError, match="py-modules"):
+            self.dist(module).py_modules
+
+
+class TestExtModules:
+    def test_pyproject_sets_attribute(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        pyproject = Path("pyproject.toml")
+        toml_config = """
+        [project]
+        name = "test"
+        version = "42.0"
+        [tool.setuptools]
+        ext-modules = [
+          {name = "my.ext", sources = ["hello.c", "world.c"]}
+        ]
+        """
+        pyproject.write_text(cleandoc(toml_config), encoding="utf-8")
+        with pytest.warns(pyprojecttoml._ExperimentalConfiguration):
+            dist = pyprojecttoml.apply_configuration(Distribution({}), pyproject)
+        assert len(dist.ext_modules) == 1
+        assert dist.ext_modules[0].name == "my.ext"
+        assert set(dist.ext_modules[0].sources) == {"hello.c", "world.c"}
+
+
 class TestDeprecatedFields:
     def test_namespace_packages(self, tmp_path):
         pyproject = tmp_path / "pyproject.toml"
@@ -312,7 +356,7 @@ class TestDeprecatedFields:
         namespace-packages = ["myproj.pkg"]
         """
         pyproject.write_text(cleandoc(config), encoding="utf-8")
-        with pytest.warns(SetuptoolsDeprecationWarning, match="namespace_packages"):
+        with pytest.raises(RemovedConfigError, match="namespace-packages"):
             pyprojecttoml.apply_configuration(makedist(tmp_path), pyproject)
 
 
@@ -328,25 +372,27 @@ class TestPresetField:
     @pytest.mark.parametrize(
         "attr, field, value",
         [
-            ("install_requires", "dependencies", ["six"]),
             ("classifiers", "classifiers", ["Private :: Classifier"]),
             ("entry_points", "scripts", {"console_scripts": ["foobar=foobar:main"]}),
             ("entry_points", "gui-scripts", {"gui_scripts": ["bazquux=bazquux:main"]}),
+            pytest.param(
+                *("install_requires", "dependencies", ["six"]),
+                marks=[
+                    pytest.mark.filterwarnings("ignore:.*install_requires. overwritten")
+                ],
+            ),
         ],
     )
     def test_not_listed_in_dynamic(self, tmp_path, attr, field, value):
-        """For the time being we just warn if the user pre-set values (e.g. via
-        ``setup.py``) but do not include them in ``dynamic``.
-        """
+        """Setuptools cannot set a field if not listed in ``dynamic``"""
         pyproject = self.pyproject(tmp_path, [])
         dist = makedist(tmp_path, **{attr: value})
         msg = re.compile(f"defined outside of `pyproject.toml`:.*{field}", re.S)
-        with pytest.warns(_WouldIgnoreField, match=msg):
+        with pytest.warns(_MissingDynamic, match=msg):
             dist = pyprojecttoml.apply_configuration(dist, pyproject)
 
-        # TODO: Once support for pyproject.toml config stabilizes attr should be None
         dist_value = _some_attrgetter(f"metadata.{attr}", attr)(dist)
-        assert dist_value == value
+        assert not dist_value
 
     @pytest.mark.parametrize(
         "attr, field, value",
@@ -388,12 +434,12 @@ class TestPresetField:
         dist = makedist(tmp_path, install_requires=install_req)
         dist = pyprojecttoml.apply_configuration(dist, pyproject)
         assert "foo" in dist.extras_require
-        assert ':python_version < "3.7"' in dist.extras_require
         egg_info = dist.get_command_obj("egg_info")
         write_requirements(egg_info, tmp_path, tmp_path / "requires.txt")
         reqs = (tmp_path / "requires.txt").read_text(encoding="utf-8")
         assert "importlib-resources" in reqs
         assert "bar" in reqs
+        assert ':python_version < "3.7"' in reqs
 
     @pytest.mark.parametrize(
         "field,group", [("scripts", "console_scripts"), ("gui-scripts", "gui_scripts")]
@@ -413,10 +459,24 @@ class TestMeta:
         with tarfile.open(setuptools_sdist) as tar:
             assert any(name.endswith(EXAMPLES_FILE) for name in tar.getnames())
 
-    def test_example_file_not_in_wheel(self, setuptools_wheel):
-        """Meta test to ensure auxiliary test files are not in wheel"""
-        with ZipFile(setuptools_wheel) as zipfile:
-            assert not any(name.endswith(EXAMPLES_FILE) for name in zipfile.namelist())
+
+class TestInteropCommandLineParsing:
+    def test_version(self, tmp_path, monkeypatch, capsys):
+        # See pypa/setuptools#4047
+        # This test can be removed once the CLI interface of setup.py is removed
+        monkeypatch.chdir(tmp_path)
+        toml_config = """
+        [project]
+        name = "test"
+        version = "42.0"
+        """
+        pyproject = Path(tmp_path, "pyproject.toml")
+        pyproject.write_text(cleandoc(toml_config), encoding="utf-8")
+        opts = {"script_args": ["--version"]}
+        dist = pyprojecttoml.apply_configuration(Distribution(opts), pyproject)
+        dist.parse_command_line()  # <-- there should be no exception here.
+        captured = capsys.readouterr()
+        assert "42.0" in captured.out
 
 
 # --- Auxiliary Functions ---
@@ -427,7 +487,10 @@ def core_metadata(dist) -> str:
         dist.metadata.write_pkg_file(buffer)
         pkg_file_txt = buffer.getvalue()
 
-    skip_prefixes = ()
+    # Make sure core metadata is valid
+    Metadata.from_email(pkg_file_txt, validate=True)  # can raise exceptions
+
+    skip_prefixes: tuple[str, ...] = ()
     skip_lines = set()
     # ---- DIFF NORMALISATION ----
     # PEP 621 is very particular about author/maintainer metadata conversion, so skip
@@ -436,8 +499,6 @@ def core_metadata(dist) -> str:
     skip_prefixes += ("Project-URL: Homepage,", "Home-page:")
     # May be missing in original (relying on default) but backfilled in the TOML
     skip_prefixes += ("Description-Content-Type:",)
-    # ini2toml can automatically convert `tests_require` to `testing` extra
-    skip_lines.add("Provides-Extra: testing")
     # Remove empty lines
     skip_lines.add("")
 

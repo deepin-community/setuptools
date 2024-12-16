@@ -1,3 +1,60 @@
+setuptools (75.2.0-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 24 Oct 2024 13:00:40 +0200
+
+setuptools (74.1.2-2) unstable; urgency=medium
+
+  * generate nondeterministic PKG-INFO files (Chris Lamb).
+    Closes: #1077601.
+
+ -- Matthias Klose <doko@debian.org>  Mon, 09 Sep 2024 16:20:00 +0200
+
+setuptools (74.1.2-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Matthias Klose <doko@debian.org>  Mon, 09 Sep 2024 15:05:44 +0200
+
+setuptools (73.0.1-1) unstable; urgency=medium
+
+  * New upstream version. Closes: #1079282.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 22 Aug 2024 16:18:52 +0200
+
+setuptools (73.0.0-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Move some vendored modules to python3-pkg-resources. Closes: #1079175.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 21 Aug 2024 10:10:08 +0200
+
+setuptools (72.2.0-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 20 Aug 2024 13:06:47 +0200
+
+setuptools (70.3.0-2) unstable; urgency=medium
+
+  * Upload to unstable.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 13 Jul 2024 10:20:32 +0200
+
+setuptools (70.3.0-1) experimental; urgency=medium
+
+  * New upstream version.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 10 Jul 2024 09:18:06 +0200
+
+setuptools (68.1.2-4) unstable; urgency=medium
+
+  * python3-setuptools: Drop dependency on python3-distutils.
+    Closes: #1056198, #1076036.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 10 Jul 2024 09:14:25 +0200
+
 setuptools (68.1.2-2) unstable; urgency=medium
 
   * Don't run dh_auto_clean, just remove the .pybuild directory manually.

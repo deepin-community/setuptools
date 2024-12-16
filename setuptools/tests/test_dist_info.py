@@ -1,5 +1,5 @@
-"""Test .dist-info style distributions.
-"""
+"""Test .dist-info style distributions."""
+
 import pathlib
 import re
 import shutil
@@ -11,8 +11,8 @@ import pytest
 
 import pkg_resources
 from setuptools.archive_util import unpack_archive
-from .textwrap import DALS
 
+from .textwrap import DALS
 
 read = partial(pathlib.Path.read_text, encoding="utf-8")
 
@@ -122,7 +122,7 @@ class TestDistInfo:
         run_command("dist_info", "--output-dir", out, *opts, cwd=tmp_path)
         assert len(list(out.glob("*.dist-info"))) == 1
         assert len(list(tmp_path.glob("*.dist-info"))) == 0
-        expected_egg_info = 1 if keep_egg_info else 0
+        expected_egg_info = int(keep_egg_info)
         assert len(list(out.glob("*.egg-info"))) == expected_egg_info
         assert len(list(tmp_path.glob("*.egg-info"))) == 0
         assert len(list(out.glob("*.__bkp__"))) == 0
@@ -198,7 +198,8 @@ def run_command_inner(*cmd, **kwargs):
         "stderr": subprocess.STDOUT,
         "stdout": subprocess.PIPE,
         "text": True,
-        'check': True,
+        "encoding": "utf-8",
+        "check": True,
         **kwargs,
     }
     cmd = [sys.executable, "-c", "__import__('setuptools').setup()", *map(str, cmd)]

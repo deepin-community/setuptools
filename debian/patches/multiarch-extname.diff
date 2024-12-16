@@ -8,7 +8,7 @@
  
          # Always read easy_install options, even if we are subclassed, or have
          # an independent instance created.  This ensures that defaults will
-@@ -298,6 +299,9 @@ class easy_install(Command):
+@@ -293,6 +294,9 @@ class easy_install(Command):
                  raise DistutilsOptionError("unknown value for --install-layout")
              self.install_layout = self.install_layout.lower()
  
@@ -20,9 +20,9 @@
              'script_dir',
 --- a/setuptools/command/install_lib.py
 +++ b/setuptools/command/install_lib.py
-@@ -7,6 +7,18 @@ import distutils.command.install_lib as
- class install_lib(orig.install_lib):
-     """Don't add compiled flags to filenames of non-Python files"""
+@@ -15,6 +15,18 @@ class install_lib(orig.install_lib):
+ 
+     distribution: Distribution  # override distutils.dist.Distribution with setuptools.dist.Distribution
  
 +    def initialize_options(self):
 +        orig.install_lib.initialize_options(self)
@@ -39,7 +39,7 @@
      def run(self):
          self.build()
          outfiles = self.install()
-@@ -96,6 +108,8 @@ class install_lib(orig.install_lib):
+@@ -104,6 +116,8 @@ class install_lib(orig.install_lib):
          exclude = self.get_exclusions()
  
          if not exclude:
@@ -48,9 +48,9 @@
              return orig.install_lib.copy_tree(self, infile, outfile)
  
          # Exclude namespace package __init__.py* files from the output
-@@ -105,11 +119,23 @@ class install_lib(orig.install_lib):
+@@ -114,11 +128,23 @@ class install_lib(orig.install_lib):
  
-         outfiles = []
+         outfiles: list[str] = []
  
 +        if self.multiarch:
 +            import sysconfig
@@ -60,7 +60,7 @@
 +            else:
 +                new_suffix = "%s-%s%s" % (ext_suffix[:-3], self.multiarch, ext_suffix[-3:])
 +
-         def pf(src, dst):
+         def pf(src: str, dst: str):
              if dst in exclude:
                  log.warn("Skipping installation of %s (namespace package)", dst)
                  return False

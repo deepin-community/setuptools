@@ -1,6 +1,6 @@
 --- a/docs/conf.py
 +++ b/docs/conf.py
-@@ -218,7 +218,7 @@ intersphinx_mapping.update(
+@@ -212,7 +212,7 @@ intersphinx_mapping.update(
  )
  
  # Add support for the unreleased "next-version" change notes

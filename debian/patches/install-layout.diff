@@ -29,7 +29,7 @@
          # Always read easy_install options, even if we are subclassed, or have
          # an independent instance created.  This ensures that defaults will
          # always come from the standard configuration file(s)' "easy_install"
-@@ -287,6 +293,11 @@ class easy_install(Command):
+@@ -282,6 +288,11 @@ class easy_install(Command):
          self.expand_basedirs()
          self.expand_dirs()
  
@@ -41,7 +41,7 @@
          self._expand(
              'install_dir',
              'script_dir',
-@@ -311,6 +322,15 @@ class easy_install(Command):
+@@ -306,6 +317,15 @@ class easy_install(Command):
          if self.user and self.install_purelib:
              self.install_dir = self.install_purelib
              self.script_dir = self.install_scripts
@@ -107,33 +107,32 @@
              for attr, val in scheme.items():
                  if getattr(self, attr, None) is None:
                      setattr(self, attr, val)
-@@ -1437,9 +1481,15 @@ def get_site_dirs():
-                 [
-                     os.path.join(
-                         prefix,
-+                        "local/lib",
-+                        "python" + sys.version[:3],
-+                        "dist-packages",
-+                    ),
-+                    os.path.join(
-+                        prefix,
-                         "lib",
-                         "python{}.{}".format(*sys.version_info),
--                        "site-packages",
-+                        "dist-packages",
-                     ),
-                     os.path.join(prefix, "lib", "site-python"),
-                 ]
+@@ -1436,9 +1480,15 @@ def get_site_dirs():
+             sitedirs.extend([
+                 os.path.join(
+                     prefix,
++                    "local/lib",
++                    "python" + sys.version[:3],
++                    "dist-packages",
++                ),
++                os.path.join(
++                    prefix,
+                     "lib",
+                     "python{}.{}".format(*sys.version_info),
+-                    "site-packages",
++                    "dist-packages",
+                 ),
+                 os.path.join(prefix, "lib", "site-python"),
+             ])
 --- a/setuptools/command/install_egg_info.py
 +++ b/setuptools/command/install_egg_info.py
-@@ -1,5 +1,5 @@
- from distutils import log, dir_util
+@@ -1,4 +1,4 @@
 -import os
 +import os, sys
  
- from setuptools import Command
- from setuptools import namespaces
-@@ -18,11 +18,28 @@ class install_egg_info(namespaces.Instal
+ from setuptools import Command, namespaces
+ from setuptools.archive_util import unpack_archive
+@@ -19,11 +19,28 @@ class install_egg_info(namespaces.Instal
  
      def initialize_options(self):
          self.install_dir = None

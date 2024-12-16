@@ -1,6 +1,6 @@
 --- a/docs/conf.py
 +++ b/docs/conf.py
-@@ -170,7 +170,7 @@ redirects = {
+@@ -159,7 +159,7 @@ redirects = {
  }
  
  # Add support for inline tabs
