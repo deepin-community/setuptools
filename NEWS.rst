@@ -1,3 +1,665 @@
+v75.2.0
+=======
+
+Features
+--------
+
+- Made errors when parsing ``Distribution`` data more explicit about the expected type (``tuple[str, ...] | list[str]``) -- by :user:`Avasam` (#4578)
+
+
+Bugfixes
+--------
+
+- Fix a `TypeError` when a ``Distribution``'s old included attribute was a `tuple` -- by :user:`Avasam` (#4578)
+- Add workaround for ``bdist_wheel --dist-info-dir`` errors
+  when customisation does not inherit from setuptools. (#4684)
+
+
+v75.1.1
+=======
+
+Bugfixes
+--------
+
+- Re-use pre-existing ``.dist-info`` dir when creating wheels via the build backend APIs (PEP 517) and the ``metadata_directory`` argument is passed -- by :user:`pelson`. (#1825)
+- Changed ``egg_info`` command to avoid adding an empty ``.egg-info`` directory
+  while iterating over entry-points.
+  This avoids triggering integration problems with ``importlib.metadata``/``importlib_metadata``
+  (reference: pypa/pyproject-hooks#206). (#4680)
+
+
+v75.1.0
+=======
+
+Features
+--------
+
+- Deprecated ``bdist_wheel.universal`` configuration. (#4617)
+
+
+Bugfixes
+--------
+
+- Removed reference to upload_docs module in entry points. (#4650)
+
+
+v75.0.0
+=======
+
+Features
+--------
+
+- Declare also the dependencies used by distutils (adds jaraco.collections).
+
+
+Deprecations and Removals
+-------------------------
+
+- Removed upload_docs command. (#2971)
+- Merge with pypa/distutils@7283751. Removed the register and upload commands and the config module that backs them (pypa/distutils#294). Removed the borland compiler. Replaced vendored dependencies with natural dependencies. Cygwin C compiler now gets compilers from sysconfig (pypa/distutils#296). (#4649)
+
+
+v74.1.3
+=======
+
+Bugfixes
+--------
+
+- Fix cross-platform compilation using ``distutils._msvccompiler.MSVCCompiler`` -- by :user:`saschanaz` and :user:`Avasam` (#4648)
+
+
+v74.1.2
+=======
+
+Bugfixes
+--------
+
+- Fixed TypeError in sdist filelist processing by adding support for pathlib Paths for the build_base. (#4615)
+- Removed degraded and deprecated ``test_integration`` (easy_install) from the test suite. (#4632)
+
+
+v74.1.1
+=======
+
+Bugfixes
+--------
+
+- Fixed TypeError in ``msvc.EnvironmentInfo.return_env`` when no runtime redistributables are installed. (#1902)
+
+
+v74.1.0
+=======
+
+Features
+--------
+
+- Added support for defining ``ext-modules`` via ``pyproject.toml``
+  (**EXPERIMENTAL**, may change in future releases). (#4568)
+
+
+Bugfixes
+--------
+
+- Merge with pypa/distutils@3dcdf8567, removing the duplicate vendored copy of packaging. (#4622)
+- Restored ``setuptools.msvc.Environmentinfo`` as it is used externally. (#4625)
+
+
+v74.0.0
+=======
+
+Features
+--------
+
+- Changed the type of error raised by ``setuptools.command.easy_install.CommandSpec.from_param`` on unsupported argument from `AttributeError` to `TypeError` -- by :user:`Avasam` (#4548)
+- Added detection of ARM64 variant of MSVC -- by :user:`saschanaz` (#4553)
+- Made ``setuptools.package_index.Credential`` a `typing.NamedTuple` -- by :user:`Avasam` (#4585)
+- Reraise error from ``setuptools.command.easy_install.auto_chmod`` instead of nonsensical ``TypeError: 'Exception' object is not subscriptable`` -- by :user:`Avasam` (#4593)
+- Fully typed all collection attributes in ``pkg_resources`` -- by :user:`Avasam` (#4598)
+- Automatically exclude ``.tox|.nox|.venv`` directories from ``sdist``. (#4603)
+
+
+Deprecations and Removals
+-------------------------
+
+- Removed the monkeypatching of distutils._msvccompiler. Now all compiler logic is consolidated in distutils. (#4600)
+- Synced with pypa/distutils@58fe058e4, including consolidating Visual Studio 2017 support (#4600, pypa/distutils#289), removal of deprecated legacy MSVC compiler modules (pypa/distutils#287), suppressing of errors when the home directory is missing (pypa/distutils#278), removal of wininst binaries (pypa/distutils#282). (#4606)
+
+
+Misc
+----
+
+- #4592
+
+
+v73.0.1
+=======
+
+Bugfixes
+--------
+
+- Remove `abc.ABCMeta` metaclass from abstract classes. `pypa/setuptools#4503 <https://github.com/pypa/setuptools/pull/4503>`_ had an unintended consequence of causing potential ``TypeError: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases`` -- by :user:`Avasam` (#4579)
+
+
+v73.0.0
+=======
+
+Features
+--------
+
+- Mark abstract base classes and methods with `abc.ABC` and `abc.abstractmethod` -- by :user:`Avasam` (#4503)
+- Changed the order of type checks in ``setuptools.command.easy_install.CommandSpec.from_param`` to support any `collections.abc.Iterable` of `str` param -- by :user:`Avasam` (#4505)
+
+
+Bugfixes
+--------
+
+- Prevent an error in ``bdist_wheel`` if ``compression`` is set to a `str` (even if valid) after finalizing options but before running the command. -- by :user:`Avasam` (#4383)
+- Raises an exception when ``py_limited_api`` is used in a build with
+  ``Py_GIL_DISABLED``. This is currently not supported (python/cpython#111506). (#4420)
+- Synced with pypa/distutils@30b7331 including fix for modified check on empty sources (pypa/distutils#284).
+
+
+Deprecations and Removals
+-------------------------
+
+- ``setuptools`` is replacing the usages of :pypi:`ordered_set` with simple
+  instances of ``dict[Hashable, None]``. This is done to remove the extra
+  dependency and it is possible because since Python 3.7, ``dict`` maintain
+  insertion order. (#4574)
+
+
+Misc
+----
+
+- #4534, #4546, #4554, #4559, #4565
+
+
+v72.2.0
+=======
+
+Features
+--------
+
+- Merged with pypa/distutils@b7ee725f3 including: Support for Pathlike objects in data files and extensions (pypa/distutils#272, pypa/distutils#237), native support for C++ compilers (pypa/distuils#228) and removed unused get_msvcr() (pypa/distutils#274). (#4538)
+
+
+v72.1.0
+=======
+
+Features
+--------
+
+- Restore the tests command and deprecate access to the module. (#4519) (#4520)
+
+
+v72.0.0
+=======
+
+Deprecations and Removals
+-------------------------
+
+- The test command has been removed. Users relying on 'setup.py test' will need to migrate to another test runner or pin setuptools before this version. (#931)
+
+
+v71.1.0
+=======
+
+Features
+--------
+
+- Added return types to typed public functions -- by :user:`Avasam`
+
+  Marked `pkg_resources` as ``py.typed`` -- by :user:`Avasam` (#4409)
+
+
+Misc
+----
+
+- #4492
+
+
+v71.0.4
+=======
+
+Bugfixes
+--------
+
+- Removed lingering unused code around Distribution._patched_dist. (#4489)
+
+
+v71.0.3
+=======
+
+Bugfixes
+--------
+
+- Reset the backports module when enabling vendored packages. (#4476)
+
+
+v71.0.2
+=======
+
+Bugfixes
+--------
+
+- Include all vendored files in the sdist. (#4480)
+
+
+v71.0.1
+=======
+
+Bugfixes
+--------
+
+- Restored package data that went missing in 71.0. This change also incidentally causes tests to be installed once again. (#4475)
+
+
+v71.0.0
+=======
+
+Deprecations and Removals
+-------------------------
+
+- Now setuptools declares its own dependencies in the ``core`` extra. Dependencies are still vendored for bootstrapping purposes, but setuptools will prefer installed dependencies if present. The ``core`` extra is used for informational purposes and should *not* be declared in package metadata (e.g. ``build-requires``). Downstream packagers can de-vendor by simply removing the ``setuptools/_vendor`` directory. Since Setuptools now prefers installed dependencies, those installing to an environment with old, incompatible dependencies will not work. In that case, either uninstall the incompatible dependencies or upgrade them to satisfy those declared in ``core``. (#2825)
+
+
+v70.3.0
+=======
+
+Features
+--------
+
+- Support for loading distutils from the standard library is now deprecated, including use of SETUPTOOLS_USE_DISTUTILS=stdlib and importing distutils before importing setuptools. (#4137)
+
+
+Bugfixes
+--------
+
+- Bugfix for building Cython extension on Windows (pypa/distutils#268).
+
+
+v70.2.0
+=======
+
+Features
+--------
+
+- Updated distutils including significant changes to support Cygwin and mingw compilers. (#4444)
+
+
+Bugfixes
+--------
+
+- Fix distribution name normalisation (:pep:`625`) for valid versions that are
+  not canonical (e.g. ``1.0-2``). (#4434)
+
+
+v70.1.1
+=======
+
+Misc
+----
+
+- #4429
+
+
+v70.1.0
+=======
+
+Features
+--------
+
+- Adopted the ``bdist_wheel`` command from the ``wheel`` project -- by :user:`agronholm` (#1386)
+- Improve error message when ``pkg_resources.ZipProvider`` tries to extract resources with a missing Egg -- by :user:`Avasam`
+
+  Added variables and parameter type annotations to ``pkg_resources`` to be nearly on par with typeshed.\* -- by :user:`Avasam`
+  \* Excluding ``TypeVar`` and ``overload``. Return types are currently inferred. (#4246)
+- Migrated Setuptools' own config to pyproject.toml (#4310)
+
+
+Bugfixes
+--------
+
+- Prevent a ``TypeError: 'NoneType' object is not callable`` when ``shutil_rmtree`` is called without an ``onexc`` parameter on Python<=3.11 -- by :user:`Avasam` (#4382)
+- Replace use of mktemp with can_symlink from the stdlib test suite. (#4403)
+- Improvement for ``attr:`` directives in configuration to handle
+  more edge cases related to complex ``package_dir``. (#4405)
+- Fix accidental implicit string concatenation. (#4411)
+
+
+Misc
+----
+
+- #4365, #4422
+
+
+v70.0.0
+=======
+
+Features
+--------
+
+- Emit a warning when ``[tools.setuptools]`` is present in ``pyproject.toml`` and will be ignored. -- by :user:`SnoopJ` (#4150)
+- Improved `AttributeError` error message if ``pkg_resources.EntryPoint.require`` is called without extras or distribution
+  Gracefully "do nothing" when trying to activate a ``pkg_resources.Distribution`` with a `None` location, rather than raising a `TypeError`
+  -- by :user:`Avasam` (#4262)
+- Typed the dynamically defined variables from `pkg_resources` -- by :user:`Avasam` (#4267)
+- Modernized and refactored VCS handling in package_index. (#4332)
+
+
+Bugfixes
+--------
+
+- In install command, use super to call the superclass methods. Avoids race conditions when monkeypatching from _distutils_system_mod occurs late. (#4136)
+- Fix finder template for lenient editable installs of implicit nested namespaces
+  constructed by using ``package_dir`` to reorganise directory structure. (#4278)
+- Fix an error with `UnicodeDecodeError` handling in ``pkg_resources`` when trying to read files in UTF-8 with a fallback -- by :user:`Avasam` (#4348)
+
+
+Improved Documentation
+----------------------
+
+- Uses RST substitution to put badges in 1 line. (#4312)
+
+
+Deprecations and Removals
+-------------------------
+
+- Further adoption of UTF-8 in ``setuptools``.
+  This change regards mostly files produced and consumed during the build process
+  (e.g. metadata files, script wrappers, automatically updated config files, etc..)
+  Although precautions were taken to minimize disruptions, some edge cases might
+  be subject to backwards incompatibility.
+
+  Support for ``"locale"`` encoding is now **deprecated**. (#4309)
+- Remove ``setuptools.convert_path`` after long deprecation period.
+  This function was never defined by ``setuptools`` itself, but rather a
+  side-effect of an import for internal usage. (#4322)
+- Remove fallback for customisations of ``distutils``' ``build.sub_command`` after long
+  deprecated period.
+  Users are advised to import ``build`` directly from ``setuptools.command.build``. (#4322)
+- Removed ``typing_extensions`` from vendored dependencies -- by :user:`Avasam` (#4324)
+- Remove deprecated ``setuptools.dep_util``.
+  The provided alternative is ``setuptools.modified``. (#4360)
+
+
+Misc
+----
+
+- #4255, #4280, #4282, #4308, #4348
+
+
+v69.5.1
+=======
+
+No significant changes.
+
+
+v69.5.0
+=======
+
+Features
+--------
+
+- Refresh unpinned vendored dependencies. (#4253)
+- Updated vendored packaging to version 24.0. (#4301)
+
+
+v69.4.2
+=======
+
+Bugfixes
+--------
+
+- Merged bugfix for pypa/distutils#246.
+
+
+v69.4.1
+=======
+
+No significant changes.
+
+
+v69.4.0
+=======
+
+Features
+--------
+
+- Merged with pypa/distutils@55982565e, including interoperability improvements for rfc822_escape (pypa/distutils#213), dynamic resolution of config_h_filename for Python 3.13 compatibility (pypa/distutils#219), added support for the z/OS compiler (pypa/distutils#216), modernized compiler options in unixcompiler (pypa/distutils#214), fixed accumulating flags bug after compile/link (pypa/distutils#207), fixed enconding warnings (pypa/distutils#236), and general quality improvements (pypa/distutils#234). (#4298)
+
+
+v69.3.1
+=======
+
+Bugfixes
+--------
+
+- Remove attempt to canonicalize the version. It's already canonical enough. (#4302)
+
+
+v69.3.0
+=======
+
+Features
+--------
+
+- Support PEP 625 by canonicalizing package name and version in filenames
+  per
+  `the spec <https://packaging.python.org/en/latest/specifications/source-distribution-format/#source-distribution-file-name>`_.
+  Projects whose names contain uppercase characters, dashes, or periods will
+  now see their sdist names normalized to match the standard and the format
+  previously seen in wheels. For example:
+
+  - ``zope.interface`` -> ``zope_interface``
+  - ``CherryPy`` -> ``cherrypy``
+  - ``foo-bar_baz`` -> ``foo_bar_baz``
+
+  Projects are encouraged to adopt this change to align with standards and
+  other backend build systems. (#3593)
+
+
+v69.2.0
+=======
+
+Features
+--------
+
+- Explicitly use ``encoding="locale"`` for ``.pth`` files whenever possible,
+  to  reduce ``EncodingWarnings``.
+  This avoid errors with UTF-8 (see discussion in python/cpython#77102). (#4265)
+
+
+Bugfixes
+--------
+
+- Clarify some `pkg_resources` methods return `bytes`, not `str`. Also return an empty `bytes` in ``EmptyProvider._get`` -- by :user:`Avasam` (#4243)
+- Return an empty `list` by default in ``pkg_resources.ResourceManager.cleanup_resources`` -- by :user:`Avasam` (#4244)
+- Made ``pkg_resoursces.NullProvider``'s ``has_metadata`` and ``metadata_isdir`` methods return actual booleans like all other Providers. -- by :user:`Avasam` (#4254)
+
+
+Misc
+----
+
+- #4237, #4238, #4241, #4260, #4261, #4263
+
+
+v69.1.1
+=======
+
+Bugfixes
+--------
+
+- Fix argument order of ``--config-settings["--build-option"]`` arguments.
+  This was broken by <https://github.com/pypa/setuptools/pull/4079>`. (#4217)
+
+
+Misc
+----
+
+- #4231
+
+
+v69.1.0
+=======
+
+Features
+--------
+
+- Updated and removed obsolete Python < 3.8 code and comments. -- by :user:`Avasam` (#4096)
+- Updated `pkg_resources` to use stdlib `importlib.machinery` instead of ``importlib_machinery`` -- by :user:`Avasam` (#4097)
+
+
+Bugfixes
+--------
+
+- In tests, rely on pytest-home for reusable fixture. (#4072)
+- Explicitely marked as ``Protocol`` and fixed missing ``self`` argument in interfaces ``pkg_resources.IMetadataProvider`` and ``pkg_resources.IResourceProvider`` -- by :user:`Avasam` (#4144)
+- Restored expectation that egg-link files would be named with dash separators for compatibility with pip prior to version 24. (#4167)
+
+
+Improved Documentation
+----------------------
+
+- Updated documentation referencing obsolete Python 3.7 code. -- by :user:`Avasam` (#4096)
+- Changed ``versionadded`` for "Type information included by default" feature from ``v68.3.0`` to ``v69.0.0`` -- by :user:`Avasam` (#4182)
+- Described the auto-generated files -- by :user:`VladimirFokow` (#4198)
+- Updated "Quickstart" to describe the current status of ``setup.cfg`` and ``pyproject.toml`` -- by :user:`VladimirFokow` (#4200)
+
+
+v69.0.3
+=======
+
+Bugfixes
+--------
+
+- Retain valid names with underscores in egg_info.
+
+
+v69.0.2
+=======
+
+Bugfixes
+--------
+
+- Added missing estimated date for removing ``setuptools.dep_util`` (deprecated in v69.0.0). (#4131)
+
+
+v69.0.1
+=======
+
+Bugfixes
+--------
+
+- Fixed imports of ``setuptools.dep_util.newer_group``.
+  A deprecation warning is issued instead of a hard failure. (#4126)
+
+
+v69.0.0
+=======
+
+Features
+--------
+
+- Include type information (``py.typed``, ``*.pyi``) by default (#3136) -- by :user:`Danie-1`,
+  **EXPERIMENTAL**. (#3136)
+- Exported ``distutils.dep_util`` and ``setuptools.dep_util`` through ``setuptools.modified`` -- by :user:`Avasam` (#4069)
+- Merged with pypa/distutils@7a04cbda0fc714.
+
+
+Bugfixes
+--------
+
+- Replaced hardcoded numeric values with :obj:`dis.opmap`,
+  fixing problem with 3.13.0a1. (#4094)
+
+
+Deprecations and Removals
+-------------------------
+
+- Configuring project ``version`` and ``egg_info.tag_*`` in such a way that
+  results in invalid version strings (according to :pep:`440`) is no longer permitted. (#4066)
+- Removed deprecated ``egg_base`` option from ``dist_info``.
+  Note that the ``dist_info`` command is considered internal to the way
+  ``setuptools`` build backend works and not intended for
+  public usage. (#4066)
+- The parsing of the deprecated ``metadata.license_file`` and
+  ``metadata.requires`` fields in ``setup.cfg`` is no longer supported.
+  Users are expected to move to ``metadata.license_files`` and
+  ``options.install_requires`` (respectively). (#4066)
+- Passing ``config_settings`` to ``setuptools.build_meta`` with
+  deprecated values for ``--global-option`` is no longer allowed. (#4066)
+- Removed deprecated ``namespace-packages`` from ``pyproject.toml``.
+  Users are asked to use
+  :doc:`implicit namespace packages <PyPUG:guides/packaging-namespace-packages>`
+  (as defined in :pep:`420`). (#4066)
+- Added strict enforcement for ``project.dynamic`` in ``pyproject.toml``.
+  This removes the transitional ability of users configuring certain parameters
+  via ``setup.py`` without making the necessary changes to ``pyproject.toml``
+  (as mandated by :pep:`621`). (#4066)
+- Removed handling of ``--config-settings["--build-option"]`` in ``setuptools.build_meta``
+  from build-backend API hooks *other than* ``build_wheel``.
+  This was motivate by `errors caused when passing this option
+  <https://github.com/pypa/setuptools/issues/2491#issuecomment-1742859314>`_. (#4079)
+
+
+v68.2.2
+=======
+
+Bugfixes
+--------
+
+- Improve backwards compatibility with deprecated CLI practices. (#4048)
+
+
+v68.2.1
+=======
+
+Bugfixes
+--------
+
+- Avoid using caching attributes in ``Distribution.metadata`` for requirements.
+  This is done for backwards compatibility with customizations that attempt to
+  modify ``install_requires`` or ``extras_require`` at a late point (still not
+  recommended). (#4043)
+
+
+Misc
+----
+
+- #4045
+
+
+v68.2.0
+=======
+
+Features
+--------
+
+- Rework how ``setuptools`` internally handles ``dependencies/install_requires``
+  and ``optional-dependencies/extras_require``. (#3903)
+- Improve the generated ``PKG-INFO`` files, by adding ``Requires-Dist`` fields.
+  Previously, these fields would be omitted in favour of a non-standard
+  ``*.egg-info/requires.txt`` file (which is still generated for the time being). (#3904)
+- Improve atomicity when writing ``PKG-INFO`` files to avoid race
+  conditions with ``importlib.metadata``. (#3904)
+
+
+Bugfixes
+--------
+
+- Fix the name given to the ``*-nspkg.pth`` files in editable installs,
+  ensuring they are unique per distribution. (#4041)
+- Workaround some limitations on ``pkg_resources``-style legacy namespaces in
+  the meta path finder for editable installations. (#4041)
+
+
+Misc
+----
+
+- #4023, #4027, #4027
+
+
 v68.1.2
 =======
 
@@ -405,7 +1067,7 @@ v65.5.1
 Misc
 ----
 * #3638: Drop a test dependency on the ``mock`` package, always use :external+python:py:mod:`unittest.mock` -- by :user:`hroncok`
-* #3659: Fixed REDoS vector in package_index.
+* #3659: Fixed REDoS vector in package_index -- by :user:`SCH227`
 
 
 v65.5.0
@@ -1028,7 +1690,7 @@ Changes
   .. warning::
      Please note that future releases of setuptools will halt the build process
      if a ``pyproject.toml`` file that does not match doc:`the PyPA Specification
-     <PyPUG:specifications/declaring-project-metadata>` is given.
+     <PyPUG:specifications/section-distribution-metadata>` is given.
 * #3215: Updated ``pyproject.toml`` validation, as generated by ``validate-pyproject==0.6.1``.
 * #3218: Prevented builds from erroring if the project specifies metadata via
   ``pyproject.toml``, but uses other files (e.g. ``setup.py``) to complement it,

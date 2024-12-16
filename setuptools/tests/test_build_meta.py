@@ -1,17 +1,19 @@
+import contextlib
+import importlib
 import os
-import sys
+import re
 import shutil
 import signal
+import sys
 import tarfile
-import importlib
-import contextlib
 from concurrent import futures
-import re
-from zipfile import ZipFile
 from pathlib import Path
+from typing import Any, Callable
+from zipfile import ZipFile
 
 import pytest
 from jaraco import path
+from packaging.requirements import Requirement
 
 from .textwrap import DALS
 
@@ -30,9 +32,9 @@ pytestmark = pytest.mark.skipif(
 
 
 class BuildBackendBase:
-    def __init__(self, cwd='.', env={}, backend_name='setuptools.build_meta'):
+    def __init__(self, cwd='.', env=None, backend_name='setuptools.build_meta'):
         self.cwd = cwd
-        self.env = env
+        self.env = env or {}
         self.backend_name = backend_name
 
 
@@ -40,10 +42,10 @@ class BuildBackend(BuildBackendBase):
     """PEP 517 Build Backend"""
 
     def __init__(self, *args, **kwargs):
-        super(BuildBackend, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.pool = futures.ProcessPoolExecutor(max_workers=1)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Callable[..., Any]:
         """Handles arbitrary function invocations on the build backend."""
 
         def method(*args, **kw):
@@ -73,7 +75,7 @@ class BuildBackend(BuildBackendBase):
 
 class BuildBackendCaller(BuildBackendBase):
     def __init__(self, *args, **kwargs):
-        super(BuildBackendCaller, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         (self.backend_name, _, self.backend_obj) = self.backend_name.partition(':')
 
@@ -160,7 +162,7 @@ defns = [
             # to obtain a distribution object first, and then run the distutils
             # commands later, because these files will be removed in the meantime.
 
-            with open('world.py', 'w') as f:
+            with open('world.py', 'w', encoding="utf-8") as f:
                 f.write('x = 42')
 
             try:
@@ -232,7 +234,7 @@ class TestBuildMetaBackend:
 
     def test_get_requires_for_build_wheel(self, build_backend):
         actual = build_backend.get_requires_for_build_wheel()
-        expected = ['six', 'wheel']
+        expected = ['six']
         assert sorted(actual) == sorted(expected)
 
     def test_get_requires_for_build_sdist(self, build_backend):
@@ -272,14 +274,14 @@ class TestBuildMetaBackend:
                 [metadata]
                 name = foo
                 version = file: VERSION
-            """
+                """
             ),
             'pyproject.toml': DALS(
                 """
                 [build-system]
                 requires = ["setuptools", "wheel"]
                 build-backend = "setuptools.build_meta"
-            """
+                """
             ),
         }
 
@@ -296,7 +298,7 @@ class TestBuildMetaBackend:
         first_result = build_method(dist_dir)
 
         # Change version.
-        with open("VERSION", "wt") as version_file:
+        with open("VERSION", "wt", encoding="utf-8") as version_file:
             version_file.write("0.0.2")
 
         # Build a *second* sdist/wheel.
@@ -306,7 +308,7 @@ class TestBuildMetaBackend:
         assert first_result != second_result
 
         # And if rebuilding the exact same sdist/wheel?
-        open(os.path.join(dist_dir, second_result), 'w').close()
+        open(os.path.join(dist_dir, second_result), 'wb').close()
         third_result = build_method(dist_dir)
         assert third_result == second_result
         assert os.path.getsize(os.path.join(dist_dir, third_result)) > 0
@@ -356,9 +358,6 @@ class TestBuildMetaBackend:
 
                 [tool.distutils.sdist]
                 formats = "gztar"
-
-                [tool.distutils.bdist_wheel]
-                universal = true
                 """
             ),
             "MANIFEST.in": DALS(
@@ -372,8 +371,10 @@ class TestBuildMetaBackend:
             "src": {
                 "foo": {
                     "__init__.py": "__version__ = '0.1'",
+                    "__init__.pyi": "__version__: str",
                     "cli.py": "def main(): print('hello world')",
                     "data.txt": "def main(): print('hello world')",
+                    "py.typed": "",
                 }
             },
         }
@@ -406,8 +407,10 @@ class TestBuildMetaBackend:
             'foo-0.1/src',
             'foo-0.1/src/foo',
             'foo-0.1/src/foo/__init__.py',
+            'foo-0.1/src/foo/__init__.pyi',
             'foo-0.1/src/foo/cli.py',
             'foo-0.1/src/foo/data.txt',
+            'foo-0.1/src/foo/py.typed',
             'foo-0.1/src/foo.egg-info',
             'foo-0.1/src/foo.egg-info/PKG-INFO',
             'foo-0.1/src/foo.egg-info/SOURCES.txt',
@@ -419,8 +422,10 @@ class TestBuildMetaBackend:
         }
         assert wheel_contents == {
             "foo/__init__.py",
+            "foo/__init__.pyi",  # include type information by default
             "foo/cli.py",
             "foo/data.txt",  # include_package_data defaults to True
+            "foo/py.typed",  # include type information by default
             "foo-0.1.dist-info/LICENSE.txt",
             "foo-0.1.dist-info/METADATA",
             "foo-0.1.dist-info/WHEEL",
@@ -430,18 +435,16 @@ class TestBuildMetaBackend:
         }
         assert license == "---- placeholder MIT license ----"
 
-        metadata = metadata.replace("(", "").replace(")", "")
-        # ^-- compatibility hack for pypa/wheel#552
-
         for line in (
             "Summary: This is a Python package",
             "License: MIT",
             "Classifier: Intended Audience :: Developers",
             "Requires-Dist: appdirs",
-            "Requires-Dist: tomli >=1 ; extra == 'all'",
-            "Requires-Dist: importlib ; python_version == \"2.6\" and extra == 'all'",
+            "Requires-Dist: " + str(Requirement('tomli>=1 ; extra == "all"')),
+            "Requires-Dist: "
+            + str(Requirement('importlib; python_version=="2.6" and extra =="all"')),
         ):
-            assert line in metadata
+            assert line in metadata, (line, metadata)
 
         assert metadata.strip().endswith("This is a ``README``")
         assert epoints.strip() == "[console_scripts]\nfoo = foo.cli:main"
@@ -562,9 +565,9 @@ class TestBuildMetaBackend:
         if not os.path.exists(setup_loc):
             setup_loc = os.path.abspath("setup.cfg")
 
-        with open(setup_loc, 'rt') as file_handler:
+        with open(setup_loc, 'rt', encoding="utf-8") as file_handler:
             content = file_handler.read()
-        with open(setup_loc, 'wt') as file_handler:
+        with open(setup_loc, 'wt', encoding="utf-8") as file_handler:
             file_handler.write(content.replace("version='0.0.0'", "version='0.0.1'"))
 
         shutil.rmtree(sdist_into_directory)
@@ -700,25 +703,6 @@ class TestBuildMetaBackend:
         for file in files:
             assert file.is_symlink() or os.stat(file).st_nlink > 0
 
-    @pytest.mark.filterwarnings("ignore::setuptools.SetuptoolsDeprecationWarning")
-    # Since the backend is running via a process pool, in some operating systems
-    # we may have problems to make assertions based on warnings/stdout/stderr...
-    # So the best is to ignore them for the time being.
-    def test_editable_with_global_option_still_works(self, tmpdir_cwd):
-        """The usage of --global-option is now discouraged in favour of --build-option.
-        This is required to make more sense of the provided scape hatch and align with
-        previous pip behaviour. See pypa/setuptools#1928.
-        """
-        path.build({**self._simple_pyproject_example, '_meta': {}})
-        build_backend = self.get_build_backend()
-        assert not Path("build").exists()
-
-        cfg = {"--global-option": ["--mode", "strict"]}
-        build_backend.prepare_metadata_for_build_editable("_meta", cfg)
-        build_backend.build_editable("temp", cfg, "_meta")
-
-        self._assert_link_tree(next(Path("build").glob("__editable__.*")))
-
     def test_editable_without_config_settings(self, tmpdir_cwd):
         """
         Sanity check to ensure tests with --mode=strict are different from the ones
@@ -733,13 +717,17 @@ class TestBuildMetaBackend:
         build_backend.build_editable("temp")
         assert not Path("build").exists()
 
-    @pytest.mark.parametrize(
-        "config_settings",
-        [
-            {"--build-option": ["--mode", "strict"]},
-            {"editable-mode": "strict"},
-        ],
-    )
+    def test_build_wheel_inplace(self, tmpdir_cwd):
+        config_settings = {"--build-option": ["build_ext", "--inplace"]}
+        path.build(self._simple_pyproject_example)
+        build_backend = self.get_build_backend()
+        assert not Path("build").exists()
+        Path("build").mkdir()
+        build_backend.prepare_metadata_for_build_wheel("build", config_settings)
+        build_backend.build_wheel("build", config_settings)
+        assert Path("build/proj-42-py3-none-any.whl").exists()
+
+    @pytest.mark.parametrize("config_settings", [{"editable-mode": "strict"}])
     def test_editable_with_config_settings(self, tmpdir_cwd, config_settings):
         path.build({**self._simple_pyproject_example, '_meta': {}})
         assert not Path("build").exists()
@@ -792,14 +780,12 @@ class TestBuildMetaBackend:
         build_backend = self.get_build_backend()
 
         if use_wheel:
-            base_requirements = ['wheel']
             get_requires = build_backend.get_requires_for_build_wheel
         else:
-            base_requirements = []
             get_requires = build_backend.get_requires_for_build_sdist
 
         # Ensure that the build requirements are properly parsed
-        expected = sorted(base_requirements + requirements)
+        expected = sorted(requirements)
         actual = get_requires()
 
         assert expected == sorted(actual)
@@ -830,7 +816,7 @@ class TestBuildMetaBackend:
         path.build(files)
         build_backend = self.get_build_backend()
         setup_requires = build_backend.get_requires_for_build_wheel()
-        assert setup_requires == ["wheel", "foo"]
+        assert setup_requires == ["foo"]
 
     def test_dont_install_setup_requires(self, tmpdir_cwd):
         files = {
@@ -914,7 +900,8 @@ class TestBuildMetaBackend:
         files = {'setup.py': ''}
         path.build(files)
 
-        with pytest.raises(ValueError, match=re.escape('No distribution was found.')):
+        msg = re.escape('No distribution was found.')
+        with pytest.raises(ValueError, match=msg):
             getattr(build_backend, build_hook)("temp")
 
 
@@ -949,20 +936,20 @@ def test_legacy_editable_install(venv, tmpdir, tmpdir_cwd):
 
     # First: sanity check
     cmd = ["pip", "install", "--no-build-isolation", "-e", "."]
-    output = str(venv.run(cmd, cwd=tmpdir), "utf-8").lower()
+    output = venv.run(cmd, cwd=tmpdir).lower()
     assert "running setup.py develop for myproj" not in output
     assert "created wheel for myproj" in output
 
     # Then: real test
     env = {**os.environ, "SETUPTOOLS_ENABLE_FEATURES": "legacy-editable"}
     cmd = ["pip", "install", "--no-build-isolation", "-e", "."]
-    output = str(venv.run(cmd, cwd=tmpdir, env=env), "utf-8").lower()
+    output = venv.run(cmd, cwd=tmpdir, env=env).lower()
     assert "running setup.py develop for myproj" in output
 
 
 @pytest.mark.filterwarnings("ignore::setuptools.SetuptoolsDeprecationWarning")
 def test_sys_exit_0_in_setuppy(monkeypatch, tmp_path):
-    """Setuptools should be resilent to setup.py with ``sys.exit(0)`` (#3973)."""
+    """Setuptools should be resilient to setup.py with ``sys.exit(0)`` (#3973)."""
     monkeypatch.chdir(tmp_path)
     setuppy = """
         import sys, setuptools
@@ -971,7 +958,7 @@ def test_sys_exit_0_in_setuppy(monkeypatch, tmp_path):
         """
     (tmp_path / "setup.py").write_text(DALS(setuppy), encoding="utf-8")
     backend = BuildBackend(backend_name="setuptools.build_meta")
-    assert backend.get_requires_for_build_wheel() == ["wheel"]
+    assert backend.get_requires_for_build_wheel() == []
 
 
 def test_system_exit_in_setuppy(monkeypatch, tmp_path):

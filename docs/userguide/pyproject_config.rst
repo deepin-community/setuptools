@@ -29,8 +29,8 @@ be used with ``setuptools``. It contains two TOML tables (identified by the
 The ``build-system`` table is used to tell the build frontend (e.g.
 :pypi:`build` or :pypi:`pip`) to use ``setuptools`` and any other plugins (e.g.
 ``setuptools-scm``) to build the package.
-The ``project`` table contains metadata fields as described by
-:doc:`PyPUG:specifications/declaring-project-metadata` guide.
+The ``project`` table contains metadata fields as described by the
+:doc:`PyPUG:guides/writing-pyproject-toml` guide.
 
 .. _example-pyproject-config:
 
@@ -47,7 +47,7 @@ The ``project`` table contains metadata fields as described by
    ]
    description = "My package description"
    readme = "README.rst"
-   requires-python = ">=3.7"
+   requires-python = ">=3.8"
    keywords = ["one", "two"]
    license = {text = "BSD-3-Clause"}
    classifiers = [
@@ -56,7 +56,7 @@ The ``project`` table contains metadata fields as described by
    ]
    dependencies = [
        "requests",
-       'importlib-metadata; python_version<"3.8"',
+       'importlib-metadata; python_version<"3.10"',
    ]
    dynamic = ["version"]
 
@@ -67,8 +67,8 @@ The ``project`` table contains metadata fields as described by
    [project.scripts]
    my-script = "my_package.module:function"
 
-   # ... other project metadata fields as specified in:
-   #     https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+   # ... other project metadata fields as listed in:
+   #     https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
 
 .. _setuptools-table:
 
@@ -88,6 +88,9 @@ file, and can be set via the ``tool.setuptools`` table:
 Key                       Value Type (TOML)           Notes
 ========================= =========================== =========================
 ``py-modules``            array                       See tip below.
+``ext-modules``           array of                    **Experimental** - Each item corresponds to a
+                          tables/inline-tables        :class:`setuptools.Extension` object and may define
+                                                      the associated parameters in :wiki:`kebab-case`.
 ``packages``              array or ``find`` directive See tip below.
 ``package-dir``           table/inline-table          Used when explicitly/manually listing ``packages``.
 ------------------------- --------------------------- -------------------------
@@ -192,7 +195,7 @@ corresponding entry is required in the ``tool.setuptools.dynamic`` table
    dynamic = ["version", "readme"]
    # ...
    [tool.setuptools.dynamic]
-   version = {attr = "my_package.VERSION"}
+   version = {attr = "my_package.__version__"}  # any module attribute compatible with ast.literal_eval
    readme = {file = ["README.rst", "USAGE.rst"]}
 
 In the ``dynamic`` table, the ``attr`` directive [#directives]_ will read an
@@ -230,7 +233,7 @@ some of them dynamically.
 
 Also note that the file format for specifying dependencies resembles a ``requirements.txt`` file,
 however please keep in mind that all non-comment lines must conform with :pep:`508`
-(``pip``-specify syntaxes, e.g. ``-c/-r/-e`` flags, are not supported).
+(``pip`` specific syntaxes, e.g. ``-c/-r/-e`` and other flags, are not supported).
 
 
 .. note::
@@ -241,6 +244,20 @@ however please keep in mind that all non-comment lines must conform with :pep:`5
 
    .. versionchanged:: 66.1.0
       Newer versions of ``setuptools`` will automatically add these files to the ``sdist``.
+
+It is advisable to use literal values together with ``attr`` (e.g. ``str``,
+``tuple[str]``, see :func:`ast.literal_eval`). This is recommend
+in order to support the common case of a literal value assigned to a variable
+in a module containing (directly or indirectly) third-party imports.
+
+``attr`` first tries to read the value from the module by examining the
+module's AST. If that fails, ``attr`` falls back to importing the module,
+using :func:`importlib.util.spec_from_file_location` recommended recipe
+(see :ref:`example on Python docs <python:importlib-examples>`
+about "Importing a source file directly").
+Note however that importing the module is error prone since your package is
+not installed yet. You may also need to manually add the project directory to
+``sys.path`` (via ``setup.py``) in order to be able to do that.
 
 ----
 
@@ -266,7 +283,7 @@ however please keep in mind that all non-comment lines must conform with :pep:`5
    directive for ``tool.setuptools.dynamic.version``.
 
 .. [#attr] ``attr`` is meant to be used when the module attribute is statically
-   specified (e.g. as a string, list or tuple). As a rule of thumb, the
+   specified (e.g. as a string). As a rule of thumb, the
    attribute should be able to be parsed with :func:`ast.literal_eval`, and
    should not be modified or re-assigned.
 

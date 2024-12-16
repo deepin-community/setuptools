@@ -1,10 +1,9 @@
-"""Basic http server for tests to simulate PyPI or custom indexes
-"""
+"""Basic http server for tests to simulate PyPI or custom indexes"""
 
-import os
-import time
-import threading
 import http.server
+import os
+import threading
+import time
 import urllib.parse
 import urllib.request
 
@@ -84,5 +83,4 @@ def path_to_url(path, authority=None):
     base = 'file:'
     if authority is not None:
         base += '//' + authority
-    url = urllib.parse.urljoin(base, urllib.request.pathname2url(path))
-    return url
+    return urllib.parse.urljoin(base, urllib.request.pathname2url(path))

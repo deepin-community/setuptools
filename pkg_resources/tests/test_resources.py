@@ -1,27 +1,27 @@
-import os
-import sys
-import string
-import platform
 import itertools
+import os
+import platform
+import string
+import sys
 
 import pytest
-from pkg_resources.extern import packaging
+from packaging.specifiers import SpecifierSet
 
 import pkg_resources
 from pkg_resources import (
-    parse_requirements,
-    VersionConflict,
-    parse_version,
     Distribution,
     EntryPoint,
     Requirement,
-    safe_version,
-    safe_name,
+    VersionConflict,
     WorkingSet,
+    parse_requirements,
+    parse_version,
+    safe_name,
+    safe_version,
 )
 
 
-# from Python 3.6 docs.
+# from Python 3.6 docs. Available from itertools on Python 3.10
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
     a, b = itertools.tee(iterable)
@@ -35,7 +35,7 @@ class Metadata(pkg_resources.EmptyProvider):
     def __init__(self, *pairs):
         self.metadata = dict(pairs)
 
-    def has_metadata(self, name):
+    def has_metadata(self, name) -> bool:
         return name in self.metadata
 
     def get_metadata(self, name):
@@ -255,12 +255,10 @@ class TestDistro:
         ws = WorkingSet([])
         Foo = Distribution.from_filename(
             "/foo_dir/Foo-1.2.dist-info",
-            metadata=Metadata(
-                (
-                    "METADATA",
-                    "Provides-Extra: baz\n" "Requires-Dist: quux; extra=='baz'",
-                )
-            ),
+            metadata=Metadata((
+                "METADATA",
+                "Provides-Extra: baz\nRequires-Dist: quux; extra=='baz'",
+            )),
         )
         ad.add(Foo)
         assert list(ws.resolve(parse_requirements("Foo"), ad)) == [Foo]
@@ -275,13 +273,11 @@ class TestDistro:
         ws = WorkingSet([])
         Foo = Distribution.from_filename(
             "/foo_dir/Foo-1.2.dist-info",
-            metadata=Metadata(
-                (
-                    "METADATA",
-                    "Provides-Extra: baz-lightyear\n"
-                    "Requires-Dist: quux; extra=='baz-lightyear'",
-                )
-            ),
+            metadata=Metadata((
+                "METADATA",
+                "Provides-Extra: baz-lightyear\n"
+                "Requires-Dist: quux; extra=='baz-lightyear'",
+            )),
         )
         ad.add(Foo)
         assert list(ws.resolve(parse_requirements("Foo"), ad)) == [Foo]
@@ -295,15 +291,13 @@ class TestDistro:
         ws = WorkingSet([])
         Foo = Distribution.from_filename(
             "/foo_dir/Foo-1.2.dist-info",
-            metadata=Metadata(
-                (
-                    "METADATA",
-                    "Provides-Extra: baz\n"
-                    "Requires-Dist: quux; extra=='baz'\n"
-                    "Provides-Extra: bar\n"
-                    "Requires-Dist: fred; extra=='bar'\n",
-                )
-            ),
+            metadata=Metadata((
+                "METADATA",
+                "Provides-Extra: baz\n"
+                "Requires-Dist: quux; extra=='baz'\n"
+                "Provides-Extra: bar\n"
+                "Requires-Dist: fred; extra=='bar'\n",
+            )),
         )
         ad.add(Foo)
         quux = Distribution.from_filename("/foo_dir/quux-1.0.dist-info")
@@ -326,15 +320,13 @@ class TestDistro:
         )
         c = Distribution.from_filename(
             "/foo_dir/c-1.0.dist-info",
-            metadata=Metadata(
-                (
-                    "METADATA",
-                    "Provides-Extra: a\n"
-                    "Requires-Dist: b;extra=='a'\n"
-                    "Provides-Extra: b\n"
-                    "Requires-Dist: foo;extra=='b'",
-                )
-            ),
+            metadata=Metadata((
+                "METADATA",
+                "Provides-Extra: a\n"
+                "Requires-Dist: b;extra=='a'\n"
+                "Provides-Extra: b\n"
+                "Requires-Dist: foo;extra=='b'",
+            )),
         )
         foo = Distribution.from_filename("/foo_dir/foo-0.1.dist-info")
         for dist in (a, b, c, foo):
@@ -572,26 +564,22 @@ class TestRequirements:
         assert set(r1.extras) == set(("foo", "bar"))
         assert set(r2.extras) == set(("foo", "bar"))
         assert hash(r1) == hash(r2)
-        assert hash(r1) == hash(
-            (
-                "twisted",
-                None,
-                packaging.specifiers.SpecifierSet(">=1.2"),
-                frozenset(["foo", "bar"]),
-                None,
-            )
-        )
+        assert hash(r1) == hash((
+            "twisted",
+            None,
+            SpecifierSet(">=1.2"),
+            frozenset(["foo", "bar"]),
+            None,
+        ))
         assert hash(
             Requirement.parse("Twisted @ https://localhost/twisted.zip")
-        ) == hash(
-            (
-                "twisted",
-                "https://localhost/twisted.zip",
-                packaging.specifiers.SpecifierSet(),
-                frozenset(),
-                None,
-            )
-        )
+        ) == hash((
+            "twisted",
+            "https://localhost/twisted.zip",
+            SpecifierSet(),
+            frozenset(),
+            None,
+        ))
 
     def testVersionEquality(self):
         r1 = Requirement.parse("foo==0.3a2")
@@ -829,11 +817,11 @@ class TestNamespaces:
             (pkg1 / '__init__.py').write_text(self.ns_str, encoding='utf-8')
             (pkg2 / '__init__.py').write_text(self.ns_str, encoding='utf-8')
         with pytest.warns(DeprecationWarning, match="pkg_resources.declare_namespace"):
-            import pkg1
+            import pkg1  # pyright: ignore[reportMissingImports] # Temporary package for test
         assert "pkg1" in pkg_resources._namespace_packages
         # attempt to import pkg2 from site-pkgs2
         with pytest.warns(DeprecationWarning, match="pkg_resources.declare_namespace"):
-            import pkg1.pkg2
+            import pkg1.pkg2  # pyright: ignore[reportMissingImports] # Temporary package for test
         # check the _namespace_packages dict
         assert "pkg1.pkg2" in pkg_resources._namespace_packages
         assert pkg_resources._namespace_packages["pkg1"] == ["pkg1.pkg2"]
@@ -874,8 +862,8 @@ class TestNamespaces:
             (subpkg / '__init__.py').write_text(vers_str % number, encoding='utf-8')
 
         with pytest.warns(DeprecationWarning, match="pkg_resources.declare_namespace"):
-            import nspkg.subpkg
-            import nspkg
+            import nspkg  # pyright: ignore[reportMissingImports] # Temporary package for test
+            import nspkg.subpkg  # pyright: ignore[reportMissingImports] # Temporary package for test
         expected = [str(site.realpath() / 'nspkg') for site in site_dirs]
         assert nspkg.__path__ == expected
         assert nspkg.subpkg.__version__ == 1

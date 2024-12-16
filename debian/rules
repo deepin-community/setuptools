@@ -5,6 +5,8 @@
 
 override_dh_auto_test:
 
+v_dir := usr/lib/$(shell py3versions -d)/dist-packages/setuptools/_vendor
+
 override_dh_auto_install:
 	dh_auto_install
 
@@ -20,6 +22,22 @@ override_dh_auto_install:
 
 	find debian/tmp -name '*.exe' | xargs -r rm -f
 
+override_dh_install:
+	dh_install
+	: # move vendored modules required by pkg_resources
+	mkdir -p debian/python3-pkg-resources/$(v_dir)/jaraco
+	mv \
+	    debian/python3-setuptools/$(v_dir)/packaging \
+	    debian/python3-setuptools/$(v_dir)/packaging-*.dist-info \
+	    debian/python3-setuptools/$(v_dir)/platformdirs \
+	    debian/python3-setuptools/$(v_dir)/platformdirs-*.dist-info \
+	    debian/python3-setuptools/$(v_dir)/jaraco.text-*.dist-info \
+		debian/python3-pkg-resources/$(v_dir)/.
+	mv \
+	    debian/python3-setuptools/$(v_dir)/jaraco/text \
+		debian/python3-pkg-resources/$(v_dir)/jaraco/.
+
+
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS.rst
 
@@ -27,6 +45,7 @@ override_dh_auto_clean:
 #	Dont run dh_auto_clean, dh-python now removes the egg-info dir.
 #	dh_auto_clean
 	rm -rf .pybuild
+	rm -rf build
 
 	rm -rf .eggs docs/build
 

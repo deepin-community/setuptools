@@ -1,11 +1,12 @@
 import os
-import stat
 import shutil
+import stat
+import warnings
 from pathlib import Path
 from unittest.mock import Mock
 
-import pytest
 import jaraco.path
+import pytest
 
 from setuptools import SetuptoolsDeprecationWarning
 from setuptools.dist import Distribution
@@ -49,7 +50,7 @@ def test_recursive_in_package_data_glob(tmpdir_cwd):
         )
     )
     os.makedirs('path/subpath/subsubpath')
-    open('path/subpath/subsubpath/data', 'w').close()
+    open('path/subpath/subsubpath/data', 'wb').close()
 
     dist.parse_command_line()
     dist.run_commands()
@@ -77,8 +78,8 @@ def test_read_only(tmpdir_cwd):
         )
     )
     os.makedirs('pkg')
-    open('pkg/__init__.py', 'w').close()
-    open('pkg/data.dat', 'w').close()
+    open('pkg/__init__.py', 'wb').close()
+    open('pkg/data.dat', 'wb').close()
     os.chmod('pkg/__init__.py', stat.S_IREAD)
     os.chmod('pkg/data.dat', stat.S_IREAD)
     dist.parse_command_line()
@@ -108,8 +109,8 @@ def test_executable_data(tmpdir_cwd):
         )
     )
     os.makedirs('pkg')
-    open('pkg/__init__.py', 'w').close()
-    open('pkg/run-me', 'w').close()
+    open('pkg/__init__.py', 'wb').close()
+    open('pkg/run-me', 'wb').close()
     os.chmod('pkg/run-me', 0o700)
 
     dist.parse_command_line()
@@ -162,11 +163,23 @@ def test_excluded_subpackages(tmpdir_cwd):
     dist.parse_config_files()
 
     build_py = dist.get_command_obj("build_py")
+
     msg = r"Python recognizes 'mypkg\.tests' as an importable package"
     with pytest.warns(SetuptoolsDeprecationWarning, match=msg):
         # TODO: To fix #3260 we need some transition period to deprecate the
         # existing behavior of `include_package_data`. After the transition, we
         # should remove the warning and fix the behaviour.
+
+        if os.getenv("SETUPTOOLS_USE_DISTUTILS") == "stdlib":
+            # pytest.warns reset the warning filter temporarily
+            # https://github.com/pytest-dev/pytest/issues/4011#issuecomment-423494810
+            warnings.filterwarnings(
+                "ignore",
+                "'encoding' argument not specified",
+                module="distutils.text_file",
+                # This warning is already fixed in pypa/distutils but not in stdlib
+            )
+
         build_py.finalize_options()
         build_py.run()
 
@@ -318,4 +331,150 @@ def test_get_outputs(tmpdir_cwd):
         f"{build_lib}/mypkg/sub2/mod2.py": "src/mypkg/_sub2/mod2.py",
         f"{build_lib}/mypkg/sub2/nested/__init__.py": "other/__init__.py",
         f"{build_lib}/mypkg/sub2/nested/mod3.py": "other/mod3.py",
+    }
+
+
+class TestTypeInfoFiles:
+    PYPROJECTS = {
+        "default_pyproject": DALS(
+            """
+            [project]
+            name = "foo"
+            version = "1"
+            """
+        ),
+        "dont_include_package_data": DALS(
+            """
+            [project]
+            name = "foo"
+            version = "1"
+
+            [tool.setuptools]
+            include-package-data = false
+            """
+        ),
+        "exclude_type_info": DALS(
+            """
+            [project]
+            name = "foo"
+            version = "1"
+
+            [tool.setuptools]
+            include-package-data = false
+
+            [tool.setuptools.exclude-package-data]
+            "*" = ["py.typed", "*.pyi"]
+            """
+        ),
+    }
+
+    EXAMPLES = {
+        "simple_namespace": {
+            "directory_structure": {
+                "foo": {
+                    "bar.pyi": "",
+                    "py.typed": "",
+                    "__init__.py": "",
+                }
+            },
+            "expected_type_files": {"foo/bar.pyi", "foo/py.typed"},
+        },
+        "nested_inside_namespace": {
+            "directory_structure": {
+                "foo": {
+                    "bar": {
+                        "py.typed": "",
+                        "mod.pyi": "",
+                    }
+                }
+            },
+            "expected_type_files": {"foo/bar/mod.pyi", "foo/bar/py.typed"},
+        },
+        "namespace_nested_inside_regular": {
+            "directory_structure": {
+                "foo": {
+                    "namespace": {
+                        "foo.pyi": "",
+                    },
+                    "__init__.pyi": "",
+                    "py.typed": "",
+                }
+            },
+            "expected_type_files": {
+                "foo/namespace/foo.pyi",
+                "foo/__init__.pyi",
+                "foo/py.typed",
+            },
+        },
+    }
+
+    @pytest.mark.parametrize(
+        "pyproject",
+        [
+            "default_pyproject",
+            pytest.param(
+                "dont_include_package_data",
+                marks=pytest.mark.xfail(reason="pypa/setuptools#4350"),
+            ),
+        ],
+    )
+    @pytest.mark.parametrize("example", EXAMPLES.keys())
+    def test_type_files_included_by_default(self, tmpdir_cwd, pyproject, example):
+        structure = {
+            **self.EXAMPLES[example]["directory_structure"],
+            "pyproject.toml": self.PYPROJECTS[pyproject],
+        }
+        expected_type_files = self.EXAMPLES[example]["expected_type_files"]
+        jaraco.path.build(structure)
+
+        build_py = get_finalized_build_py()
+        outputs = get_outputs(build_py)
+        assert expected_type_files <= outputs
+
+    @pytest.mark.parametrize("pyproject", ["exclude_type_info"])
+    @pytest.mark.parametrize("example", EXAMPLES.keys())
+    def test_type_files_can_be_excluded(self, tmpdir_cwd, pyproject, example):
+        structure = {
+            **self.EXAMPLES[example]["directory_structure"],
+            "pyproject.toml": self.PYPROJECTS[pyproject],
+        }
+        expected_type_files = self.EXAMPLES[example]["expected_type_files"]
+        jaraco.path.build(structure)
+
+        build_py = get_finalized_build_py()
+        outputs = get_outputs(build_py)
+        assert expected_type_files.isdisjoint(outputs)
+
+    def test_stub_only_package(self, tmpdir_cwd):
+        structure = {
+            "pyproject.toml": DALS(
+                """
+                [project]
+                name = "foo-stubs"
+                version = "1"
+                """
+            ),
+            "foo-stubs": {"__init__.pyi": "", "bar.pyi": ""},
+        }
+        expected_type_files = {"foo-stubs/__init__.pyi", "foo-stubs/bar.pyi"}
+        jaraco.path.build(structure)
+
+        build_py = get_finalized_build_py()
+        outputs = get_outputs(build_py)
+        assert expected_type_files <= outputs
+
+
+def get_finalized_build_py(script_name="%build_py-test%"):
+    dist = Distribution({"script_name": script_name})
+    dist.parse_config_files()
+    build_py = dist.get_command_obj("build_py")
+    build_py.finalize_options()
+    return build_py
+
+
+def get_outputs(build_py):
+    build_dir = Path(build_py.build_lib)
+    return {
+        os.path.relpath(x, build_dir).replace(os.sep, "/")
+        for x in build_py.get_outputs()
     }
