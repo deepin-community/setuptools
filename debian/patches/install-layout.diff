@@ -1,6 +1,6 @@
 --- a/setuptools/command/easy_install.py
 +++ b/setuptools/command/easy_install.py
-@@ -142,6 +142,8 @@ class easy_install(Command):
+@@ -143,6 +143,8 @@ class easy_install(Command):
          ('allow-hosts=', 'H', "pattern(s) that hostnames must match"),
          ('local-snapshots-ok', 'l', "allow building eggs from local checkouts"),
          ('version', None, "print version information and exit"),
@@ -9,7 +9,7 @@
          (
              'no-find-links',
              None,
-@@ -156,7 +158,7 @@ class easy_install(Command):
+@@ -157,7 +159,7 @@ class easy_install(Command):
          'upgrade',
          'always-copy',
          'editable',
@@ -18,7 +18,7 @@
          'local-snapshots-ok',
          'version',
          'user',
-@@ -199,6 +201,10 @@ class easy_install(Command):
+@@ -200,6 +202,10 @@ class easy_install(Command):
          self.pth_file = self.always_copy_from = None
          self.site_dirs = None
          self.installed_projects = {}
@@ -57,8 +57,8 @@
          # default --record from the install command
          self.set_undefined_options('install', ('record', 'record'))
          self.all_site_dirs = get_site_dirs()
-@@ -1373,11 +1393,28 @@ class easy_install(Command):
-                 self.debug_print("os.makedirs('%s', 0o700)" % path)
+@@ -1377,11 +1397,28 @@ class easy_install(Command):
+                 self.debug_print(f"os.makedirs('{path}', 0o700)")
                  os.makedirs(path, 0o700)
  
 +    if sys.version[:3] in ('2.3', '2.4', '2.5') or 'real_prefix' in sys.__dict__:
@@ -86,7 +86,7 @@
      )
  
      DEFAULT_SCHEME = dict(
-@@ -1388,11 +1425,18 @@ class easy_install(Command):
+@@ -1392,11 +1429,18 @@ class easy_install(Command):
      def _expand(self, *attrs):
          config_vars = self.get_finalized_command('install').config_vars
  
@@ -107,18 +107,18 @@
              for attr, val in scheme.items():
                  if getattr(self, attr, None) is None:
                      setattr(self, attr, val)
-@@ -1436,9 +1480,15 @@ def get_site_dirs():
+@@ -1440,9 +1484,15 @@ def get_site_dirs():
              sitedirs.extend([
                  os.path.join(
                      prefix,
 +                    "local/lib",
-+                    "python" + sys.version[:3],
++                    f"python{sys.version_info.major}.{sys.version_info.minor}",
 +                    "dist-packages",
 +                ),
 +                os.path.join(
 +                    prefix,
                      "lib",
-                     "python{}.{}".format(*sys.version_info),
+                     f"python{sys.version_info.major}.{sys.version_info.minor}",
 -                    "site-packages",
 +                    "dist-packages",
                  ),
@@ -139,7 +139,7 @@
 +        self.install_layout = None
 +        self.prefix_option = None
  
-     def finalize_options(self):
+     def finalize_options(self) -> None:
          self.set_undefined_options('install_lib', ('install_dir', 'install_dir'))
 +        self.set_undefined_options('install',('install_layout','install_layout'))
 +        if sys.hexversion > 0x2060000:
@@ -160,4 +160,4 @@
 +
          self.source = ei_cmd.egg_info
          self.target = os.path.join(self.install_dir, basename)
-         self.outputs = []
+         self.outputs: list[str] = []

@@ -1,6 +1,6 @@
 --- a/setuptools/command/easy_install.py
 +++ b/setuptools/command/easy_install.py
-@@ -204,6 +204,7 @@ class easy_install(Command):
+@@ -205,6 +205,7 @@ class easy_install(Command):
          # enable custom installation, known values: deb
          self.install_layout = None
          self.force_installation_into_system_dir = None
@@ -36,10 +36,10 @@
 +            import sysconfig
 +            self.multiarch = sysconfig.get_config_var('MULTIARCH')
 +
-     def run(self):
+     def run(self) -> None:
          self.build()
          outfiles = self.install()
-@@ -104,6 +116,8 @@ class install_lib(orig.install_lib):
+@@ -107,6 +119,8 @@ class install_lib(orig.install_lib):
          exclude = self.get_exclusions()
  
          if not exclude:
@@ -48,7 +48,7 @@
              return orig.install_lib.copy_tree(self, infile, outfile)
  
          # Exclude namespace package __init__.py* files from the output
-@@ -114,11 +128,23 @@ class install_lib(orig.install_lib):
+@@ -117,11 +131,23 @@ class install_lib(orig.install_lib):
  
          outfiles: list[str] = []
  

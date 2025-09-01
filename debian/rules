@@ -24,18 +24,26 @@ override_dh_auto_install:
 
 override_dh_install:
 	dh_install
+	find debian/python3-pkg-resources
+	find debian/python3-setuptools
 	: # move vendored modules required by pkg_resources
-	mkdir -p debian/python3-pkg-resources/$(v_dir)/jaraco
-	mv \
-	    debian/python3-setuptools/$(v_dir)/packaging \
-	    debian/python3-setuptools/$(v_dir)/packaging-*.dist-info \
-	    debian/python3-setuptools/$(v_dir)/platformdirs \
-	    debian/python3-setuptools/$(v_dir)/platformdirs-*.dist-info \
-	    debian/python3-setuptools/$(v_dir)/jaraco.text-*.dist-info \
-		debian/python3-pkg-resources/$(v_dir)/.
-	mv \
-	    debian/python3-setuptools/$(v_dir)/jaraco/text \
-		debian/python3-pkg-resources/$(v_dir)/jaraco/.
+	set -e; \
+	for py in $$(py3versions -s); do \
+	  vdir=usr/lib/$$py/dist-packages/setuptools/_vendor; \
+	  mkdir -p debian/python3-pkg-resources/$$vdir/jaraco; \
+	  mv \
+	    debian/python3-setuptools/$$vdir/packaging \
+	    debian/python3-setuptools/$$vdir/packaging-*.dist-info \
+	    debian/python3-setuptools/$$vdir/platformdirs \
+	    debian/python3-setuptools/$$vdir/platformdirs-*.dist-info \
+	    debian/python3-setuptools/$$vdir/jaraco.text-*.dist-info \
+		debian/python3-pkg-resources/$$vdir/.; \
+	  mv \
+	    debian/python3-setuptools/$$vdir/jaraco/text \
+		debian/python3-pkg-resources/$$vdir/jaraco/.; \
+	done
+	find debian/python3-pkg-resources
+	find debian/python3-setuptools
 
 
 override_dh_installchangelogs:

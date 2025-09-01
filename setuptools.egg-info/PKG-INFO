@@ -1,6 +1,6 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: setuptools
-Version: 75.2.0
+Version: 78.1.1
 Summary: Easily download, build, install, upgrade, and uninstall Python packages
 Author-email: Python Packaging Authority <distutils-sig@python.org>
 Project-URL: Source, https://github.com/pypa/setuptools
@@ -9,14 +9,13 @@ Project-URL: Changelog, https://setuptools.pypa.io/en/stable/history.html
 Keywords: CPAN PyPI distutils eggs package management
 Classifier: Development Status :: 5 - Production/Stable
 Classifier: Intended Audience :: Developers
-Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3 :: Only
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Classifier: Topic :: System :: Archiving :: Packaging
 Classifier: Topic :: System :: Systems Administration
 Classifier: Topic :: Utilities
-Requires-Python: >=3.8
+Requires-Python: >=3.9
 Description-Content-Type: text/x-rst
 License-File: LICENSE
 Provides-Extra: test
@@ -24,10 +23,10 @@ Requires-Dist: pytest!=8.1.*,>=6; extra == "test"
 Requires-Dist: virtualenv>=13.0.0; extra == "test"
 Requires-Dist: wheel>=0.44.0; extra == "test"
 Requires-Dist: pip>=19.1; extra == "test"
-Requires-Dist: packaging>=23.2; extra == "test"
+Requires-Dist: packaging>=24.2; extra == "test"
 Requires-Dist: jaraco.envs>=2.2; extra == "test"
 Requires-Dist: pytest-xdist>=3; extra == "test"
-Requires-Dist: jaraco.path>=3.2.0; extra == "test"
+Requires-Dist: jaraco.path>=3.7.2; extra == "test"
 Requires-Dist: build[virtualenv]>=1.0.3; extra == "test"
 Requires-Dist: filelock>=3.4.0; extra == "test"
 Requires-Dist: ini2toml[lite]>=0.14; extra == "test"
@@ -38,7 +37,7 @@ Requires-Dist: jaraco.develop>=7.21; (python_version >= "3.9" and sys_platform !
 Requires-Dist: pytest-home>=0.5; extra == "test"
 Requires-Dist: pytest-subprocess; extra == "test"
 Requires-Dist: pyproject-hooks!=1.1; extra == "test"
-Requires-Dist: jaraco.test; extra == "test"
+Requires-Dist: jaraco.test>=5.5; extra == "test"
 Provides-Extra: doc
 Requires-Dist: sphinx>=3.5; extra == "doc"
 Requires-Dist: jaraco.packaging>=9.3; extra == "doc"
@@ -57,31 +56,29 @@ Requires-Dist: towncrier<24.7; extra == "doc"
 Provides-Extra: ssl
 Provides-Extra: certs
 Provides-Extra: core
-Requires-Dist: packaging>=24; extra == "core"
+Requires-Dist: packaging>=24.2; extra == "core"
 Requires-Dist: more_itertools>=8.8; extra == "core"
 Requires-Dist: jaraco.text>=3.7; extra == "core"
-Requires-Dist: importlib_resources>=5.10.2; python_version < "3.9" and extra == "core"
 Requires-Dist: importlib_metadata>=6; python_version < "3.10" and extra == "core"
 Requires-Dist: tomli>=2.0.1; python_version < "3.11" and extra == "core"
 Requires-Dist: wheel>=0.43.0; extra == "core"
-Requires-Dist: platformdirs>=2.6.2; extra == "core"
-Requires-Dist: jaraco.collections; extra == "core"
-Requires-Dist: jaraco.functools; extra == "core"
-Requires-Dist: packaging; extra == "core"
+Requires-Dist: platformdirs>=4.2.2; extra == "core"
+Requires-Dist: jaraco.functools>=4; extra == "core"
 Requires-Dist: more_itertools; extra == "core"
 Provides-Extra: check
 Requires-Dist: pytest-checkdocs>=2.4; extra == "check"
 Requires-Dist: pytest-ruff>=0.2.1; sys_platform != "cygwin" and extra == "check"
-Requires-Dist: ruff>=0.5.2; sys_platform != "cygwin" and extra == "check"
+Requires-Dist: ruff>=0.8.0; sys_platform != "cygwin" and extra == "check"
 Provides-Extra: cover
 Requires-Dist: pytest-cov; extra == "cover"
 Provides-Extra: enabler
 Requires-Dist: pytest-enabler>=2.2; extra == "enabler"
 Provides-Extra: type
 Requires-Dist: pytest-mypy; extra == "type"
-Requires-Dist: mypy==1.11.*; extra == "type"
+Requires-Dist: mypy==1.14.*; extra == "type"
 Requires-Dist: importlib_metadata>=7.0.2; python_version < "3.10" and extra == "type"
 Requires-Dist: jaraco.develop>=7.21; sys_platform != "cygwin" and extra == "type"
+Dynamic: license-file
 
 .. |pypi-version| image:: https://img.shields.io/pypi/v/setuptools.svg
    :target: https://pypi.org/project/setuptools
@@ -99,7 +96,7 @@ Requires-Dist: jaraco.develop>=7.21; sys_platform != "cygwin" and extra == "type
 .. |docs-badge| image:: https://img.shields.io/readthedocs/setuptools/latest.svg
    :target: https://setuptools.pypa.io
 
-.. |skeleton-badge| image:: https://img.shields.io/badge/skeleton-2024-informational
+.. |skeleton-badge| image:: https://img.shields.io/badge/skeleton-2025-informational
    :target: https://blog.jaraco.com/skeleton
 
 .. |codecov-badge| image:: https://img.shields.io/codecov/c/github/pypa/setuptools/master.svg?logo=codecov&logoColor=white
