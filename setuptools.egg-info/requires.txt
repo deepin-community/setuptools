@@ -6,17 +6,15 @@ pytest-checkdocs>=2.4
 
 [check:sys_platform != "cygwin"]
 pytest-ruff>=0.2.1
-ruff>=0.5.2
+ruff>=0.8.0
 
 [core]
-packaging>=24
+packaging>=24.2
 more_itertools>=8.8
 jaraco.text>=3.7
 wheel>=0.43.0
-platformdirs>=2.6.2
-jaraco.collections
-jaraco.functools
-packaging
+platformdirs>=4.2.2
+jaraco.functools>=4
 more_itertools
 
 [core:python_version < "3.10"]
@@ -24,9 +22,6 @@ importlib_metadata>=6
 
 [core:python_version < "3.11"]
 tomli>=2.0.1
-
-[core:python_version < "3.9"]
-importlib_resources>=5.10.2
 
 [cover]
 pytest-cov
@@ -57,10 +52,10 @@ pytest!=8.1.*,>=6
 virtualenv>=13.0.0
 wheel>=0.44.0
 pip>=19.1
-packaging>=23.2
+packaging>=24.2
 jaraco.envs>=2.2
 pytest-xdist>=3
-jaraco.path>=3.2.0
+jaraco.path>=3.7.2
 build[virtualenv]>=1.0.3
 filelock>=3.4.0
 ini2toml[lite]>=0.14
@@ -69,7 +64,7 @@ pytest-timeout
 pytest-home>=0.5
 pytest-subprocess
 pyproject-hooks!=1.1
-jaraco.test
+jaraco.test>=5.5
 
 [test:python_version >= "3.9" and sys_platform != "cygwin"]
 jaraco.develop>=7.21
@@ -79,7 +74,7 @@ pytest-perf
 
 [type]
 pytest-mypy
-mypy==1.11.*
+mypy==1.14.*
 
 [type:python_version < "3.10"]
 importlib_metadata>=7.0.2
