@@ -1,3 +1,9 @@
+setuptools (78.1.1-0.1deepin1) unstable; urgency=medium
+
+  * Rebuild with LTO enabled (dpkg vendor feature optimize/lto).
+
+ -- tunaichao <tunaichao@uniontech.com>  Mon, 21 Sep 2026 16:11:39 +0800
+
 setuptools (78.1.1-0.1) unstable; urgency=medium
 
   * Non-maintainer upload.
