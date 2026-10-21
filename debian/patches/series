@@ -14,3 +14,4 @@ no-sphinx-jaraco-tidelift.diff
 sphinx-theme.diff
 dont-require-vendored-modules.diff
 revert-shebang-change.diff
+CVE-2026-23949.patch
